@@ -452,11 +452,76 @@ systemctl restart nginx
 
 ---
 
-### Step 10: Set Up SSL (HTTPS)
+### Step 10: Set Up Domain with Porkbun (DNS)
+
+This guide uses Porkbun as the domain registrar with a subdomain setup (e.g., `gift.devops-monk.com`). Adjust the domain/subdomain to your own.
+
+#### 10a. Add DNS Records in Porkbun
+
+1. Log in to [porkbun.com](https://porkbun.com)
+2. Go to **Domain Management** > click your domain (e.g., `devops-monk.com`) > **DNS Records**
+3. Add these two records:
+
+| Type | Host | Answer | TTL |
+|---|---|---|---|
+| A | *(leave blank or `@`)* | `YOUR_VPS_IP_ADDRESS` | 600 |
+| CNAME | `gift` | `devops-monk.com` | 600 |
+
+> The A record points your root domain to the VPS IP. The CNAME record makes `gift.devops-monk.com` an alias for the root domain. If you already have an A record for the root domain, just add the CNAME.
+
+#### 10b. Verify DNS Propagation (on VPS)
+
+Wait a few minutes after adding records, then verify:
 
 ```bash
-certbot --nginx -d yourdomain.com -d www.yourdomain.com
+dig gift.devops-monk.com +short
 ```
+
+This should return your VPS IP address. If it's empty, wait a few more minutes and try again. You can also check propagation at [dnschecker.org](https://dnschecker.org).
+
+#### 10c. Update Nginx Config
+
+Update the `server_name` in your Nginx config to match your subdomain:
+
+```bash
+nano /etc/nginx/sites-available/personalised-gifts
+```
+
+Change the `server_name` line to:
+
+```nginx
+server_name gift.devops-monk.com;
+```
+
+Test and reload:
+
+```bash
+nginx -t
+systemctl reload nginx
+```
+
+#### 10d. Verify HTTP Access
+
+At this point the site should be accessible via HTTP:
+
+```bash
+curl -I http://gift.devops-monk.com
+```
+
+You should see a `200 OK` response.
+
+---
+
+### Step 11: Set Up SSL (HTTPS)
+
+```bash
+certbot --nginx -d gift.devops-monk.com
+```
+
+Follow the prompts:
+1. Enter your email address
+2. Agree to terms of service
+3. Certbot will auto-configure HTTPS in your Nginx config
 
 Auto-renewal test:
 
@@ -464,27 +529,28 @@ Auto-renewal test:
 certbot renew --dry-run
 ```
 
+> Certbot auto-renews certificates via a systemd timer. No manual renewal needed. Certificates are valid for 90 days and renew automatically 30 days before expiry.
+
+Verify HTTPS is working:
+
+```bash
+curl -I https://gift.devops-monk.com
+```
+
 ---
 
-### Step 11: Configure Webhooks
+### Step 12: Update .env with Domain
 
-#### Stripe Webhooks
+```bash
+nano /var/www/personalised-gift/.env
+```
 
-1. Go to [Stripe Dashboard > Webhooks](https://dashboard.stripe.com/webhooks)
-2. Click "Add endpoint"
-3. Set URL to: `https://yourdomain.com/api/webhooks/stripe`
-4. Select events: `checkout.session.completed`, `payment_intent.payment_failed`
-5. Copy the webhook signing secret and update `.env`
+Update these two values:
 
-#### Clerk Webhooks
-
-1. Go to [Clerk Dashboard > Webhooks](https://dashboard.clerk.com/last-active?path=webhooks)
-2. Add endpoint: `https://yourdomain.com/api/webhooks/clerk`
-3. Select events: `user.created`, `user.updated`
-
-#### PhonePe Callback
-
-PhonePe's server-to-server callback is configured automatically via the `callbackUrl` parameter when creating a payment. It points to `https://yourdomain.com/api/webhooks/phonepe`. No manual webhook setup is needed.
+```env
+NEXT_PUBLIC_BASE_URL=https://gift.devops-monk.com
+NEXT_PUBLIC_APP_URL=https://gift.devops-monk.com
+```
 
 Then rebuild and restart:
 
@@ -498,50 +564,254 @@ pm2 restart personalised-gifts
 
 ---
 
-## Common Operations
+### Step 13: Configure Webhooks
 
-### Updating the Application
+Now that your domain is live with HTTPS, set up webhook endpoints for each service.
+
+#### Stripe Webhooks
+
+1. Go to [Stripe Dashboard > Webhooks](https://dashboard.stripe.com/webhooks)
+2. Click "Add endpoint"
+3. Set URL to: `https://gift.devops-monk.com/api/webhooks/stripe`
+4. Select events: `checkout.session.completed`, `payment_intent.payment_failed`
+5. Copy the webhook signing secret and update `.env`:
+   ```
+   STRIPE_WEBHOOK_SECRET=whsec_xxxxx
+   ```
+
+#### Clerk Webhooks
+
+1. Go to [Clerk Dashboard > Webhooks](https://dashboard.clerk.com/last-active?path=webhooks)
+2. Add endpoint: `https://gift.devops-monk.com/api/webhooks/clerk`
+3. Select events: `user.created`, `user.updated`
+4. Also go to **Clerk Dashboard > Settings > Domains** and add `gift.devops-monk.com`
+
+#### PhonePe Callback
+
+PhonePe's server-to-server callback is configured automatically via the `callbackUrl` parameter when creating a payment. It uses `NEXT_PUBLIC_BASE_URL` from your `.env`, so it will automatically point to `https://gift.devops-monk.com/api/webhooks/phonepe`. No manual webhook setup is needed.
+
+#### After updating webhook secrets, rebuild:
 
 ```bash
 cd /var/www/personalised-gift
-git pull origin main
-npm install
-npx prisma migrate deploy
 npm run build
 cp -r .next/static .next/standalone/.next/static
 cp -r public .next/standalone/public
 pm2 restart personalised-gifts
 ```
 
+---
+
+### Using a Different Domain/Subdomain
+
+To use a different domain or subdomain, replace `gift.devops-monk.com` in all the steps above:
+
+| Where | What to Change |
+|---|---|
+| Porkbun DNS | Add A record for root + CNAME for subdomain |
+| Nginx config | `server_name your-subdomain.yourdomain.com;` |
+| Certbot | `certbot --nginx -d your-subdomain.yourdomain.com` |
+| `.env` | `NEXT_PUBLIC_BASE_URL=https://your-subdomain.yourdomain.com` |
+| Stripe webhook | Update endpoint URL |
+| Clerk webhook | Update endpoint URL + add domain |
+
+---
+
+## VPS: First-Time Setup (Fresh Database)
+
+If this is your first time deploying or you have a fresh/empty database, run these steps in order on your VPS:
+
+```bash
+cd /var/www/personalised-gift
+
+# Step 1: Install dependencies
+npm install
+
+# Step 2: Generate Prisma client
+npx prisma generate
+
+# Step 3: Create all database tables from schema
+npx prisma db push
+
+# Step 4: Seed the database with sample data (15 products, categories, occasions)
+npx prisma db seed
+
+# Step 5: Build the app
+npm run build
+
+# Step 6: Copy static assets to standalone build
+cp -r .next/static .next/standalone/.next/static
+cp -r public .next/standalone/public
+
+# Step 7: Start the app with PM2 (first time)
+pm2 start .next/standalone/server.js --name "personalised-gifts" -i max
+
+# Step 8: Save PM2 config so it auto-restarts on VPS reboot
+pm2 save
+pm2 startup
+```
+
+Verify everything is running:
+
+```bash
+pm2 status                  # Should show "personalised-gifts" as online
+curl http://localhost:3000   # Should return HTML
+```
+
+> **Note:** `npx prisma db push` creates tables directly from the schema without migration files. This is fine for the initial setup. For all future schema changes, use the migration workflow below.
+
+---
+
+## VPS: Deploying Schema Changes (Migrations)
+
+When you change `prisma/schema.prisma` (e.g., adding new fields or tables), follow this two-part workflow:
+
+### Part A: On your local dev machine
+
+```bash
+# 1. Make your schema changes in prisma/schema.prisma
+
+# 2. Create a migration file (this needs shadow DB access, only works locally)
+npx prisma migrate dev --name describe-your-change
+
+# 3. Commit the new migration files to git
+git add prisma/migrations
+git commit -m "Add migration: describe-your-change"
+git push origin main
+```
+
+This creates a SQL migration file in `prisma/migrations/` that can be replayed on any database.
+
+### Part B: On the VPS
+
+```bash
+cd /var/www/personalised-gift
+
+# 1. Pull the latest code (includes new migration files)
+git pull origin main
+
+# 2. Install any new dependencies
+npm install
+
+# 3. Apply pending migrations to the database
+npx prisma migrate deploy
+
+# 4. Regenerate Prisma client (picks up schema changes)
+npx prisma generate
+
+# 5. Build the app
+npm run build
+
+# 6. Copy static assets
+cp -r .next/static .next/standalone/.next/static
+cp -r public .next/standalone/public
+
+# 7. Restart the app
+pm2 restart personalised-gifts
+```
+
+> **Important:** Always use `migrate deploy` on the VPS, never `migrate dev`. The `dev` command needs shadow DB permissions and is meant for local development only.
+
+---
+
+## VPS: Deploying Code Changes (No Schema Changes)
+
+For code-only changes (UI, server actions, bug fixes) where the database schema hasn't changed:
+
+```bash
+cd /var/www/personalised-gift
+
+# 1. Pull latest code
+git pull origin main
+
+# 2. Install any new dependencies
+npm install
+
+# 3. Build the app
+npm run build
+
+# 4. Copy static assets
+cp -r .next/static .next/standalone/.next/static
+cp -r public .next/standalone/public
+
+# 5. Restart
+pm2 restart personalised-gifts
+```
+
+---
+
+## VPS: Resetting the Database (Start Fresh)
+
+If you need to wipe everything and start over:
+
+```bash
+cd /var/www/personalised-gift
+
+# 1. Drop and recreate all tables
+npx prisma db push --force-reset
+
+# 2. Re-seed with sample data
+npx prisma db seed
+
+# 3. Rebuild and restart
+npm run build
+cp -r .next/static .next/standalone/.next/static
+cp -r public .next/standalone/public
+pm2 restart personalised-gifts
+```
+
+> **Warning:** This deletes ALL data (orders, users, products). Only use in development/staging.
+
+---
+
+## Common Operations
+
 ### Viewing Logs
 
 ```bash
-pm2 logs personalised-gifts
-pm2 logs personalised-gifts --lines 100
+pm2 logs personalised-gifts             # Live log stream
+pm2 logs personalised-gifts --lines 100  # Last 100 lines
+pm2 logs personalised-gifts --err        # Errors only
 ```
 
 ### Database Management
 
 ```bash
-# Open Prisma Studio (visual DB browser)
+# Open Prisma Studio (visual DB browser - runs on port 5555)
 npx prisma studio
 
-# Run new migrations after schema changes
+# Check migration status
+npx prisma migrate status
+
+# Apply pending migrations
 npx prisma migrate deploy
 
-# Reset database (DESTRUCTIVE - drops all data)
+# Reset database (DESTRUCTIVE - drops all data and re-seeds)
 npx prisma migrate reset
 ```
 
 ### PM2 Commands
 
 ```bash
-pm2 status                        # Check status
+pm2 status                        # Check app status
 pm2 restart personalised-gifts    # Restart app
 pm2 stop personalised-gifts       # Stop app
 pm2 delete personalised-gifts     # Remove from PM2
-pm2 monit                         # Real-time monitoring
+pm2 monit                         # Real-time CPU/memory monitoring
+pm2 logs personalised-gifts       # View logs
 ```
+
+### Quick Reference: Which Prisma Command to Use
+
+| Scenario | Command | Where to Run |
+|---|---|---|
+| First-time setup (no migrations exist) | `npx prisma db push` | VPS |
+| Create a new migration | `npx prisma migrate dev --name name` | Local only |
+| Apply existing migrations | `npx prisma migrate deploy` | VPS |
+| Seed sample data | `npx prisma db seed` | VPS or Local |
+| Wipe and recreate tables | `npx prisma db push --force-reset` | VPS (careful!) |
+| Browse data visually | `npx prisma studio` | VPS or Local |
+| Regenerate client after schema change | `npx prisma generate` | VPS or Local |
 
 ---
 
@@ -558,7 +828,7 @@ cp .env.example .env
 # Generate Prisma client
 npx prisma generate
 
-# Run database migrations
+# Run database migrations (creates tables + shadow DB)
 npx prisma migrate dev
 
 # Seed the database
