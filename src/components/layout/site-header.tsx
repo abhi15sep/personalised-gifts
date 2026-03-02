@@ -3,7 +3,6 @@
 import { useState } from "react"
 import Link from "next/link"
 import { ShoppingBag, Search, Menu, Heart, User } from "lucide-react"
-import { useUser, UserButton, SignInButton } from "@clerk/nextjs"
 
 import { useCartStore } from "@/stores/cart-store"
 import { Button } from "@/components/ui/button"
@@ -18,15 +17,64 @@ import {
 } from "@/components/ui/sheet"
 
 const navLinks = [
-  { href: "/shop", label: "Shop" },
+  { href: "/products", label: "Shop" },
   { href: "/occasions", label: "Occasions" },
   { href: "/gift-finder", label: "Gift Finder" },
 ]
 
+function ClerkAuth() {
+  try {
+    // eslint-disable-next-line @typescript-eslint/no-require-imports
+    const { useUser, UserButton, SignInButton } = require("@clerk/nextjs")
+    const { isSignedIn, isLoaded } = useUser()
+
+    if (!isLoaded) return null
+
+    if (isSignedIn) {
+      return (
+        <UserButton
+          afterSignOutUrl="/"
+          appearance={{
+            elements: {
+              avatarBox: "h-8 w-8",
+            },
+          }}
+        />
+      )
+    }
+
+    return (
+      <SignInButton mode="modal">
+        <Button
+          variant="ghost"
+          size="icon"
+          className="text-warm-700 hover:text-warm-900 hover:bg-warm-100"
+        >
+          <User className="h-5 w-5" />
+          <span className="sr-only">Sign in</span>
+        </Button>
+      </SignInButton>
+    )
+  } catch {
+    return (
+      <Button
+        variant="ghost"
+        size="icon"
+        className="text-warm-700 hover:text-warm-900 hover:bg-warm-100"
+        asChild
+      >
+        <Link href="/sign-in">
+          <User className="h-5 w-5" />
+          <span className="sr-only">Sign in</span>
+        </Link>
+      </Button>
+    )
+  }
+}
+
 export function SiteHeader() {
   const [mobileOpen, setMobileOpen] = useState(false)
   const itemCount = useCartStore((s) => s.getItemCount())
-  const { isSignedIn, isLoaded } = useUser()
 
   return (
     <header className="sticky top-0 z-50 w-full border-b border-warm-200 bg-warm-50/95 backdrop-blur supports-[backdrop-filter]:bg-warm-50/80">
@@ -85,7 +133,7 @@ export function SiteHeader() {
             className="hidden text-warm-700 hover:text-warm-900 hover:bg-warm-100 sm:inline-flex"
             asChild
           >
-            <Link href="/wishlist">
+            <Link href="/account/wishlist">
               <Heart className="h-5 w-5" />
               <span className="sr-only">Wishlist</span>
             </Link>
@@ -110,31 +158,7 @@ export function SiteHeader() {
           </Button>
 
           {/* User / Auth */}
-          {isLoaded && (
-            <>
-              {isSignedIn ? (
-                <UserButton
-                  afterSignOutUrl="/"
-                  appearance={{
-                    elements: {
-                      avatarBox: "h-8 w-8",
-                    },
-                  }}
-                />
-              ) : (
-                <SignInButton mode="modal">
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    className="text-warm-700 hover:text-warm-900 hover:bg-warm-100"
-                  >
-                    <User className="h-5 w-5" />
-                    <span className="sr-only">Sign in</span>
-                  </Button>
-                </SignInButton>
-              )}
-            </>
-          )}
+          <ClerkAuth />
 
           {/* Mobile Menu */}
           <Sheet open={mobileOpen} onOpenChange={setMobileOpen}>
@@ -166,7 +190,7 @@ export function SiteHeader() {
                   </Link>
                 ))}
                 <Link
-                  href="/wishlist"
+                  href="/account/wishlist"
                   onClick={() => setMobileOpen(false)}
                   className="flex items-center gap-2 rounded-md px-3 py-2.5 text-sm font-medium text-warm-700 transition-colors hover:bg-warm-100 hover:text-warm-900"
                 >

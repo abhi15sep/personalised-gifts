@@ -37,20 +37,26 @@ export default function RootLayout({
 }: Readonly<{
   children: React.ReactNode
 }>) {
-  return (
-    <ClerkProvider>
-      <html lang="en" suppressHydrationWarning>
-        <body
-          className={`${inter.variable} ${playfair.variable} font-sans antialiased`}
-        >
-          <div className="relative flex min-h-screen flex-col">
-            <SiteHeader />
-            <main className="flex-1">{children}</main>
-            <SiteFooter />
-          </div>
-          <Toaster />
-        </body>
-      </html>
-    </ClerkProvider>
+  const body = (
+    <html lang="en" suppressHydrationWarning>
+      <body
+        className={`${inter.variable} ${playfair.variable} font-sans antialiased`}
+      >
+        <div className="relative flex min-h-screen flex-col">
+          <SiteHeader />
+          <main className="flex-1">{children}</main>
+          <SiteFooter />
+        </div>
+        <Toaster />
+      </body>
+    </html>
   )
+
+  // Only wrap with ClerkProvider when a valid publishable key is set
+  const clerkKey = process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY
+  if (clerkKey && clerkKey.startsWith("pk_") && !clerkKey.includes("placeholder")) {
+    return <ClerkProvider>{body}</ClerkProvider>
+  }
+
+  return body
 }

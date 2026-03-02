@@ -1,6 +1,7 @@
 import Link from "next/link"
-import { UserButton } from "@clerk/nextjs"
-import { Package, Heart, MapPin, Bell, Settings } from "lucide-react"
+import { Package, Heart, MapPin, Bell } from "lucide-react"
+
+export const dynamic = "force-dynamic"
 
 const accountLinks = [
   { href: "/account", label: "My Orders", icon: Package },
@@ -16,8 +17,7 @@ export default function AccountLayout({
 }) {
   return (
     <div className="container mx-auto px-4 py-8">
-      <div className="mb-8 flex items-center gap-4">
-        <UserButton afterSignOutUrl="/" />
+      <div className="mb-8">
         <h1 className="font-heading text-3xl font-bold">My Account</h1>
       </div>
       <div className="grid gap-8 md:grid-cols-[220px_1fr]">
