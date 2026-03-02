@@ -1,0 +1,352 @@
+generator client {
+  provider        = "prisma-client-js"
+  previewFeatures = ["fullTextIndex"]
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+// ─── Enums ───────────────────────────────────────────────────────────────────
+
+enum Role {
+  CUSTOMER
+  ADMIN
+}
+
+enum ProductStatus {
+  ACTIVE
+  DRAFT
+  ARCHIVED
+}
+
+enum PersonalizationType {
+  TEXT
+  TEXTAREA
+  IMAGE
+  COLOUR
+  FONT
+  DROPDOWN
+  TOGGLE
+}
+
+enum OrderStatus {
+  PENDING
+  PAID
+  PROCESSING
+  SHIPPED
+  DELIVERED
+  CANCELLED
+  REFUNDED
+}
+
+enum FulfillmentStatus {
+  PENDING
+  IN_PRODUCTION
+  QUALITY_CHECK
+  COMPLETE
+}
+
+enum ReviewStatus {
+  PENDING
+  APPROVED
+  REJECTED
+}
+
+enum DiscountType {
+  PERCENTAGE
+  FIXED
+}
+
+// ─── User ────────────────────────────────────────────────────────────────────
+
+model User {
+  id        BigInt   @id @default(autoincrement())
+  clerkId   String   @unique
+  email     String   @unique
+  name      String?
+  phone     String?
+  role      Role     @default(CUSTOMER)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  addresses          Address[]
+  orders             Order[]
+  reviews            Review[]
+  wishlists          Wishlist[]
+  occasionReminders  OccasionReminder[]
+}
+
+// ─── Address ─────────────────────────────────────────────────────────────────
+
+model Address {
+  id         BigInt  @id @default(autoincrement())
+  userId     BigInt
+  label      String?
+  fullName   String
+  line1      String
+  line2      String?
+  city       String
+  county     String?
+  postalCode String
+  country    String  @default("GB")
+  isDefault  Boolean @default(false)
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+}
+
+// ─── Category ────────────────────────────────────────────────────────────────
+
+model Category {
+  id          Int     @id @default(autoincrement())
+  name        String
+  slug        String  @unique
+  description String? @db.Text
+  parentId    Int?
+  sortOrder   Int     @default(0)
+  imageUrl    String?
+
+  parent   Category?  @relation("CategoryToCategory", fields: [parentId], references: [id], onDelete: SetNull)
+  children Category[] @relation("CategoryToCategory")
+
+  products Product[]
+
+  @@index([parentId])
+}
+
+// ─── Occasion ────────────────────────────────────────────────────────────────
+
+model Occasion {
+  id   Int     @id @default(autoincrement())
+  name String
+  slug String  @unique
+  icon String?
+
+  products ProductOccasion[]
+}
+
+// ─── Product ─────────────────────────────────────────────────────────────────
+
+model Product {
+  id               Int           @id @default(autoincrement())
+  name             String
+  slug             String        @unique
+  description      String?       @db.Text
+  basePrice        Decimal       @db.Decimal(10, 2)
+  compareAtPrice   Decimal?      @db.Decimal(10, 2)
+  categoryId       Int?
+  isPersonalizable Boolean       @default(false)
+  isFeatured       Boolean       @default(false)
+  status           ProductStatus @default(DRAFT)
+  productionDays   Int?
+  metaTitle        String?
+  metaDescription  String?       @db.Text
+  createdAt        DateTime      @default(now())
+  updatedAt        DateTime      @updatedAt
+
+  category              Category?              @relation(fields: [categoryId], references: [id], onDelete: SetNull)
+  occasions             ProductOccasion[]
+  images                ProductImage[]
+  variants              ProductVariant[]
+  personalizationOptions PersonalizationOption[]
+  orderItems            OrderItem[]
+  reviews               Review[]
+  wishlists             Wishlist[]
+
+  @@index([categoryId])
+  @@index([status])
+  @@fulltext([name, description])
+}
+
+// ─── ProductOccasion (join table) ────────────────────────────────────────────
+
+model ProductOccasion {
+  productId  Int
+  occasionId Int
+
+  product  Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+  occasion Occasion @relation(fields: [occasionId], references: [id], onDelete: Cascade)
+
+  @@id([productId, occasionId])
+  @@index([occasionId])
+}
+
+// ─── ProductImage ────────────────────────────────────────────────────────────
+
+model ProductImage {
+  id        Int     @id @default(autoincrement())
+  productId Int
+  url       String
+  altText   String?
+  sortOrder Int     @default(0)
+  isPrimary Boolean @default(false)
+
+  product Product @relation(fields: [productId], references: [id], onDelete: Cascade)
+
+  @@index([productId])
+}
+
+// ─── ProductVariant ──────────────────────────────────────────────────────────
+
+model ProductVariant {
+  id        Int     @id @default(autoincrement())
+  productId Int
+  sku       String  @unique
+  name      String
+  price     Decimal @db.Decimal(10, 2)
+  stockQty  Int     @default(0)
+  attributes Json?
+  imageUrl  String?
+
+  product    Product     @relation(fields: [productId], references: [id], onDelete: Cascade)
+  orderItems OrderItem[]
+
+  @@index([productId])
+}
+
+// ─── PersonalizationOption ───────────────────────────────────────────────────
+
+model PersonalizationOption {
+  id            Int                 @id @default(autoincrement())
+  productId     Int
+  optionKey     String
+  label         String
+  optionType    PersonalizationType
+  isRequired    Boolean             @default(false)
+  priceModifier Decimal             @default(0) @db.Decimal(10, 2)
+  constraints   Json?
+  sortOrder     Int                 @default(0)
+
+  product Product @relation(fields: [productId], references: [id], onDelete: Cascade)
+
+  @@index([productId])
+}
+
+// ─── Order ───────────────────────────────────────────────────────────────────
+
+model Order {
+  id                      BigInt      @id @default(autoincrement())
+  userId                  BigInt?
+  guestEmail              String?
+  orderNumber             String      @unique
+  status                  OrderStatus @default(PENDING)
+  subtotal                Decimal     @db.Decimal(10, 2)
+  shippingAmount          Decimal     @default(0) @db.Decimal(10, 2)
+  giftWrapAmount          Decimal     @default(0) @db.Decimal(10, 2)
+  discountAmount          Decimal     @default(0) @db.Decimal(10, 2)
+  totalAmount             Decimal     @db.Decimal(10, 2)
+  currency                String      @default("GBP")
+  stripePaymentIntentId   String?
+  stripeCheckoutSessionId String?
+  shippingAddress         Json?
+  billingAddress          Json?
+  isGift                  Boolean     @default(false)
+  giftMessage             String?     @db.Text
+  giftWrap                Boolean     @default(false)
+  notes                   String?     @db.Text
+  shippedAt               DateTime?
+  deliveredAt             DateTime?
+  createdAt               DateTime    @default(now())
+  updatedAt               DateTime    @updatedAt
+
+  user  User?       @relation(fields: [userId], references: [id], onDelete: SetNull)
+  items OrderItem[]
+
+  @@index([userId])
+  @@index([status])
+  @@index([orderNumber])
+}
+
+// ─── OrderItem ───────────────────────────────────────────────────────────────
+
+model OrderItem {
+  id                  BigInt            @id @default(autoincrement())
+  orderId             BigInt
+  productId           Int
+  variantId           Int?
+  quantity            Int
+  unitPrice           Decimal           @db.Decimal(10, 2)
+  personalizationPrice Decimal          @default(0) @db.Decimal(10, 2)
+  productSnapshot     Json?
+  personalizationData Json?
+  previewImageUrl     String?
+  fulfillmentStatus   FulfillmentStatus @default(PENDING)
+
+  order   Order          @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  product Product        @relation(fields: [productId], references: [id], onDelete: Restrict)
+  variant ProductVariant? @relation(fields: [variantId], references: [id], onDelete: SetNull)
+
+  @@index([orderId])
+  @@index([productId])
+  @@index([variantId])
+}
+
+// ─── Review ──────────────────────────────────────────────────────────────────
+
+model Review {
+  id        Int          @id @default(autoincrement())
+  productId Int
+  userId    BigInt
+  orderId   BigInt?
+  rating    Int
+  title     String?
+  body      String?      @db.Text
+  photoUrl  String?
+  status    ReviewStatus @default(PENDING)
+  createdAt DateTime     @default(now())
+
+  product Product @relation(fields: [productId], references: [id], onDelete: Cascade)
+  user    User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([productId])
+  @@index([userId])
+}
+
+// ─── Wishlist ────────────────────────────────────────────────────────────────
+
+model Wishlist {
+  id        Int      @id @default(autoincrement())
+  userId    BigInt
+  productId Int
+  createdAt DateTime @default(now())
+
+  user    User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  product Product @relation(fields: [productId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, productId])
+  @@index([productId])
+}
+
+// ─── OccasionReminder ────────────────────────────────────────────────────────
+
+model OccasionReminder {
+  id               Int      @id @default(autoincrement())
+  userId           BigInt
+  occasionName     String
+  reminderDate     DateTime
+  recipientName    String?
+  isRecurring      Boolean  @default(true)
+  notifyDaysBefore Int      @default(7)
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+}
+
+// ─── Coupon ──────────────────────────────────────────────────────────────────
+
+model Coupon {
+  id            Int          @id @default(autoincrement())
+  code          String       @unique
+  discountType  DiscountType
+  discountValue Decimal      @db.Decimal(10, 2)
+  minOrderValue Decimal?     @db.Decimal(10, 2)
+  maxUses       Int?
+  usedCount     Int          @default(0)
+  validFrom     DateTime
+  validUntil    DateTime?
+  isActive      Boolean      @default(true)
+}
