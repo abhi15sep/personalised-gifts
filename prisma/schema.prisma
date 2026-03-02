@@ -239,8 +239,11 @@ model Order {
   discountAmount          Decimal     @default(0) @db.Decimal(10, 2)
   totalAmount             Decimal     @db.Decimal(10, 2)
   currency                String      @default("GBP")
+  paymentMethod           String      @default("stripe")
   stripePaymentIntentId   String?
   stripeCheckoutSessionId String?
+  phonepeOrderId          String?
+  phonepeTransactionId    String?
   shippingAddress         Json?
   billingAddress          Json?
   isGift                  Boolean     @default(false)

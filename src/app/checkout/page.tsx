@@ -6,7 +6,7 @@ import Link from "next/link"
 import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { z } from "zod"
-import { Check } from "lucide-react"
+import { Check, CreditCard, Smartphone, Loader2 } from "lucide-react"
 
 import { useCartStore } from "@/stores/cart-store"
 import { formatPrice } from "@/lib/format"
@@ -14,7 +14,13 @@ import {
   SHIPPING_COST,
   FREE_SHIPPING_THRESHOLD,
   GIFT_WRAP_COST,
+  GBP_TO_INR_RATE,
+  SHIPPING_COST_INR,
+  FREE_SHIPPING_THRESHOLD_INR,
+  GIFT_WRAP_COST_INR,
 } from "@/lib/constants"
+import { createCheckoutSession } from "@/lib/actions/checkout"
+import { createPhonePeCheckoutSession } from "@/lib/actions/phonepe-checkout"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Checkbox } from "@/components/ui/checkbox"
@@ -48,6 +54,8 @@ const shippingSchema = z.object({
 
 type ShippingFormValues = z.infer<typeof shippingSchema>
 
+type PaymentMethod = "stripe" | "phonepe"
+
 const STEPS = [
   { number: 1, label: "Shipping" },
   { number: 2, label: "Payment" },
@@ -56,6 +64,9 @@ const STEPS = [
 
 export default function CheckoutPage() {
   const [currentStep, setCurrentStep] = useState(1)
+  const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>("stripe")
+  const [isProcessing, setIsProcessing] = useState(false)
+  const [shippingData, setShippingData] = useState<ShippingFormValues | null>(null)
   const {
     items,
     isGift,
@@ -66,9 +77,25 @@ export default function CheckoutPage() {
   } = useCartStore()
 
   const subtotal = getSubtotal()
-  const shippingCost = subtotal >= FREE_SHIPPING_THRESHOLD ? 0 : SHIPPING_COST
-  const giftWrapCost = giftWrap ? GIFT_WRAP_COST : 0
-  const total = subtotal + shippingCost + giftWrapCost
+  const isINR = paymentMethod === "phonepe"
+  const currency = isINR ? "INR" : "GBP"
+
+  // GBP values
+  const shippingCostGBP = subtotal >= FREE_SHIPPING_THRESHOLD ? 0 : SHIPPING_COST
+  const giftWrapCostGBP = giftWrap ? GIFT_WRAP_COST : 0
+  const totalGBP = subtotal + shippingCostGBP + giftWrapCostGBP
+
+  // INR values
+  const subtotalINR = Math.round(subtotal * GBP_TO_INR_RATE)
+  const shippingCostINR = subtotalINR >= FREE_SHIPPING_THRESHOLD_INR ? 0 : SHIPPING_COST_INR
+  const giftWrapCostINR = giftWrap ? GIFT_WRAP_COST_INR : 0
+  const totalINR = subtotalINR + shippingCostINR + giftWrapCostINR
+
+  // Display values based on selected payment method
+  const displaySubtotal = isINR ? subtotalINR : subtotal
+  const displayShipping = isINR ? shippingCostINR : shippingCostGBP
+  const displayGiftWrap = isINR ? giftWrapCostINR : giftWrapCostGBP
+  const displayTotal = isINR ? totalINR : totalGBP
 
   const form = useForm<ShippingFormValues>({
     resolver: zodResolver(shippingSchema),
@@ -90,7 +117,61 @@ export default function CheckoutPage() {
 
   function onShippingSubmit(data: ShippingFormValues) {
     setGiftOptions(data.isGift, data.giftMessage ?? "", data.giftWrap)
+    setShippingData(data)
     setCurrentStep(2)
+  }
+
+  async function handlePayment() {
+    if (!shippingData || items.length === 0) return
+    setIsProcessing(true)
+
+    const checkoutItems = items.map((item) => ({
+      productId: item.productId,
+      variantId: item.variantId ?? undefined,
+      quantity: item.quantity,
+      personalizationData: item.personalizationData ?? undefined,
+    }))
+
+    const address = {
+      fullName: shippingData.fullName,
+      line1: shippingData.addressLine1,
+      line2: shippingData.addressLine2,
+      city: shippingData.city,
+      county: shippingData.county,
+      postalCode: shippingData.postcode,
+      country: shippingData.country,
+    }
+
+    const giftOpts = {
+      isGift: shippingData.isGift,
+      giftMessage: shippingData.giftMessage,
+      giftWrap: shippingData.giftWrap,
+    }
+
+    try {
+      if (paymentMethod === "phonepe") {
+        const result = await createPhonePeCheckoutSession(
+          checkoutItems,
+          address,
+          giftOpts
+        )
+        if (result.redirectUrl) {
+          window.location.href = result.redirectUrl
+        }
+      } else {
+        const result = await createCheckoutSession(
+          checkoutItems,
+          address,
+          giftOpts
+        )
+        if (result.url) {
+          window.location.href = result.url
+        }
+      }
+    } catch (error) {
+      console.error("Payment error:", error)
+      setIsProcessing(false)
+    }
   }
 
   return (
@@ -422,31 +503,114 @@ export default function CheckoutPage() {
             <Card className="border-warm-200 bg-white">
               <CardHeader>
                 <CardTitle className="font-heading text-xl text-warm-900">
-                  Payment
+                  Choose Payment Method
                 </CardTitle>
               </CardHeader>
-              <CardContent>
-                <div className="rounded-lg border border-dashed border-warm-300 bg-warm-50 p-8 text-center">
-                  <p className="text-warm-600 mb-4">
-                    Stripe Payment Element will be integrated here.
-                  </p>
-                  <Button
-                    className="w-full h-11 bg-warm-700 text-warm-50 hover:bg-warm-800 text-base font-semibold"
-                    onClick={() => {
-                      // Placeholder - will wire up Stripe later
-                      window.location.href = `/checkout/success?order=${Date.now()}`
-                    }}
+              <CardContent className="space-y-4">
+                {/* Payment Method Selector */}
+                <div className="grid gap-3 sm:grid-cols-2">
+                  <button
+                    type="button"
+                    onClick={() => setPaymentMethod("stripe")}
+                    className={`flex items-center gap-3 rounded-lg border-2 p-4 text-left transition-colors ${
+                      paymentMethod === "stripe"
+                        ? "border-warm-700 bg-warm-50"
+                        : "border-warm-200 bg-white hover:border-warm-300"
+                    }`}
                   >
-                    Pay with Stripe
-                  </Button>
-                  <Button
-                    variant="ghost"
-                    className="mt-3 w-full text-warm-600 hover:text-warm-800 hover:bg-warm-100"
-                    onClick={() => setCurrentStep(1)}
+                    <div
+                      className={`flex h-10 w-10 items-center justify-center rounded-full ${
+                        paymentMethod === "stripe"
+                          ? "bg-warm-700 text-white"
+                          : "bg-warm-100 text-warm-500"
+                      }`}
+                    >
+                      <CreditCard className="h-5 w-5" />
+                    </div>
+                    <div>
+                      <p className="font-semibold text-warm-900">
+                        Card Payment
+                      </p>
+                      <p className="text-xs text-warm-500">
+                        Pay in GBP via Stripe
+                      </p>
+                    </div>
+                    {paymentMethod === "stripe" && (
+                      <Check className="ml-auto h-5 w-5 text-warm-700" />
+                    )}
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => setPaymentMethod("phonepe")}
+                    className={`flex items-center gap-3 rounded-lg border-2 p-4 text-left transition-colors ${
+                      paymentMethod === "phonepe"
+                        ? "border-purple-600 bg-purple-50"
+                        : "border-warm-200 bg-white hover:border-warm-300"
+                    }`}
                   >
-                    Back to Shipping
-                  </Button>
+                    <div
+                      className={`flex h-10 w-10 items-center justify-center rounded-full ${
+                        paymentMethod === "phonepe"
+                          ? "bg-purple-600 text-white"
+                          : "bg-warm-100 text-warm-500"
+                      }`}
+                    >
+                      <Smartphone className="h-5 w-5" />
+                    </div>
+                    <div>
+                      <p className="font-semibold text-warm-900">
+                        UPI / PhonePe
+                      </p>
+                      <p className="text-xs text-warm-500">
+                        Pay in INR via UPI
+                      </p>
+                    </div>
+                    {paymentMethod === "phonepe" && (
+                      <Check className="ml-auto h-5 w-5 text-purple-600" />
+                    )}
+                  </button>
                 </div>
+
+                {paymentMethod === "phonepe" && (
+                  <div className="rounded-lg bg-purple-50 border border-purple-200 p-3 text-sm text-purple-800">
+                    Prices are converted to INR at an approximate rate of 1 GBP = {GBP_TO_INR_RATE} INR.
+                    You&apos;ll be redirected to PhonePe to complete payment via UPI, cards, or wallets.
+                  </div>
+                )}
+
+                <Separator className="bg-warm-200" />
+
+                {/* Pay Button */}
+                <Button
+                  className={`w-full h-11 text-base font-semibold ${
+                    paymentMethod === "phonepe"
+                      ? "bg-purple-600 text-white hover:bg-purple-700"
+                      : "bg-warm-700 text-warm-50 hover:bg-warm-800"
+                  }`}
+                  onClick={handlePayment}
+                  disabled={isProcessing}
+                >
+                  {isProcessing ? (
+                    <>
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                      Processing...
+                    </>
+                  ) : paymentMethod === "phonepe" ? (
+                    `Pay ${formatPrice(displayTotal, "INR")} with UPI`
+                  ) : (
+                    `Pay ${formatPrice(displayTotal, "GBP")} with Card`
+                  )}
+                </Button>
+
+                <Button
+                  variant="ghost"
+                  className="w-full text-warm-600 hover:text-warm-800 hover:bg-warm-100"
+                  onClick={() => setCurrentStep(1)}
+                  disabled={isProcessing}
+                >
+                  Back to Shipping
+                </Button>
               </CardContent>
             </Card>
           )}
@@ -458,34 +622,44 @@ export default function CheckoutPage() {
             <CardHeader>
               <CardTitle className="font-heading text-lg text-warm-900">
                 Order Summary
+                {isINR && currentStep === 2 && (
+                  <span className="ml-2 text-xs font-normal text-purple-600">
+                    (INR)
+                  </span>
+                )}
               </CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
               {/* Items */}
-              {items.map((item) => (
-                <div key={item.id} className="flex items-center gap-3">
-                  <div className="h-12 w-12 shrink-0 overflow-hidden rounded-md bg-gradient-to-br from-warm-100 to-warm-200">
-                    <div className="flex h-full items-center justify-center">
-                      <span className="text-lg text-warm-300">
-                        {"\uD83C\uDF81"}
-                      </span>
+              {items.map((item) => {
+                const itemTotal =
+                  (item.price + item.personalizationPrice) * item.quantity
+                const displayItemTotal = isINR && currentStep === 2
+                  ? Math.round(itemTotal * GBP_TO_INR_RATE)
+                  : itemTotal
+                return (
+                  <div key={item.id} className="flex items-center gap-3">
+                    <div className="h-12 w-12 shrink-0 overflow-hidden rounded-md bg-gradient-to-br from-warm-100 to-warm-200">
+                      <div className="flex h-full items-center justify-center">
+                        <span className="text-lg text-warm-300">
+                          {"\uD83C\uDF81"}
+                        </span>
+                      </div>
                     </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="truncate text-sm font-medium text-warm-800">
+                        {item.name}
+                      </p>
+                      <p className="text-xs text-warm-500">
+                        Qty: {item.quantity}
+                      </p>
+                    </div>
+                    <span className="text-sm font-medium text-warm-800">
+                      {formatPrice(displayItemTotal, currency)}
+                    </span>
                   </div>
-                  <div className="flex-1 min-w-0">
-                    <p className="truncate text-sm font-medium text-warm-800">
-                      {item.name}
-                    </p>
-                    <p className="text-xs text-warm-500">
-                      Qty: {item.quantity}
-                    </p>
-                  </div>
-                  <span className="text-sm font-medium text-warm-800">
-                    {formatPrice(
-                      (item.price + item.personalizationPrice) * item.quantity
-                    )}
-                  </span>
-                </div>
-              ))}
+                )
+              })}
 
               <Separator className="bg-warm-200" />
 
@@ -493,26 +667,26 @@ export default function CheckoutPage() {
               <div className="flex items-center justify-between text-sm">
                 <span className="text-warm-600">Subtotal</span>
                 <span className="font-medium text-warm-800">
-                  {formatPrice(subtotal)}
+                  {formatPrice(displaySubtotal, currency)}
                 </span>
               </div>
 
               <div className="flex items-center justify-between text-sm">
                 <span className="text-warm-600">Shipping</span>
                 <span className="font-medium text-warm-800">
-                  {shippingCost === 0 ? (
+                  {displayShipping === 0 ? (
                     <span className="text-green-600">Free</span>
                   ) : (
-                    formatPrice(shippingCost)
+                    formatPrice(displayShipping, currency)
                   )}
                 </span>
               </div>
 
-              {giftWrapCost > 0 && (
+              {displayGiftWrap > 0 && (
                 <div className="flex items-center justify-between text-sm">
                   <span className="text-warm-600">Gift wrap</span>
                   <span className="font-medium text-warm-800">
-                    {formatPrice(giftWrapCost)}
+                    {formatPrice(displayGiftWrap, currency)}
                   </span>
                 </div>
               )}
@@ -524,7 +698,7 @@ export default function CheckoutPage() {
                   Total
                 </span>
                 <span className="text-lg font-bold text-warm-900">
-                  {formatPrice(total)}
+                  {formatPrice(displayTotal, currency)}
                 </span>
               </div>
             </CardContent>

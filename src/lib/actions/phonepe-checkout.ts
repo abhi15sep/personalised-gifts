@@ -1,13 +1,14 @@
 'use server'
 
 import { db } from '@/lib/db'
-import { stripe } from '@/lib/stripe'
 import { auth } from '@clerk/nextjs/server'
+import { createPhonePePayment } from '@/lib/phonepe'
 import {
-  SHIPPING_COST,
-  FREE_SHIPPING_THRESHOLD,
-  GIFT_WRAP_COST,
-  CURRENCY,
+  SHIPPING_COST_INR,
+  FREE_SHIPPING_THRESHOLD_INR,
+  GIFT_WRAP_COST_INR,
+  CURRENCY_INR,
+  GBP_TO_INR_RATE,
 } from '@/lib/constants'
 
 interface CheckoutItem {
@@ -39,7 +40,11 @@ function generateOrderNumber(): string {
   return `PG-${randomDigits}`
 }
 
-export async function createCheckoutSession(
+function generateMerchantTransactionId(): string {
+  return `MT-${Date.now()}-${Math.floor(Math.random() * 10000)}`
+}
+
+export async function createPhonePeCheckoutSession(
   items: CheckoutItem[],
   shippingAddress: ShippingAddress,
   giftOptions: GiftOptions = {}
@@ -55,7 +60,7 @@ export async function createCheckoutSession(
     dbUserId = user?.id ?? null
   }
 
-  // Fetch product and variant prices from DB - never trust client prices
+  // Fetch product and variant prices from DB
   const productIds = items.map((item) => item.productId)
   const products = await db.product.findMany({
     where: { id: { in: productIds } },
@@ -71,8 +76,8 @@ export async function createCheckoutSession(
 
   const productMap = new Map(products.map((p) => [p.id, p]))
 
-  // Calculate line items and subtotal
-  let subtotal = 0
+  // Calculate line items in INR
+  let subtotalINR = 0
   const lineItems: {
     productId: number
     variantId?: number
@@ -84,25 +89,13 @@ export async function createCheckoutSession(
     productSnapshot: Record<string, unknown>
   }[] = []
 
-  const stripeLineItems: {
-    price_data: {
-      currency: string
-      product_data: {
-        name: string
-        images?: string[]
-      }
-      unit_amount: number
-    }
-    quantity: number
-  }[] = []
-
   for (const item of items) {
     const product = productMap.get(item.productId)
     if (!product) {
       throw new Error(`Product with id ${item.productId} not found`)
     }
 
-    let unitPrice = Number(product.basePrice)
+    let unitPriceGBP = Number(product.basePrice)
 
     if (item.variantId) {
       const variant = product.variants.find((v) => v.id === item.variantId)
@@ -111,24 +104,29 @@ export async function createCheckoutSession(
           `Variant ${item.variantId} not found for product ${item.productId}`
         )
       }
-      unitPrice = Number(variant.price)
+      unitPriceGBP = Number(variant.price)
     }
 
-    // Calculate personalization surcharge
-    let personalizationPrice = 0
+    // Calculate personalization surcharge in GBP
+    let personalizationPriceGBP = 0
     if (item.personalizationData && product.personalizationOptions.length > 0) {
       for (const option of product.personalizationOptions) {
         if (
           item.personalizationData[option.optionKey] !== undefined &&
           Number(option.priceModifier) > 0
         ) {
-          personalizationPrice += Number(option.priceModifier)
+          personalizationPriceGBP += Number(option.priceModifier)
         }
       }
     }
 
-    const itemTotal = (unitPrice + personalizationPrice) * item.quantity
-    subtotal += itemTotal
+    // Convert to INR
+    const unitPriceINR = Math.round(unitPriceGBP * GBP_TO_INR_RATE * 100) / 100
+    const personalizationPriceINR =
+      Math.round(personalizationPriceGBP * GBP_TO_INR_RATE * 100) / 100
+
+    const itemTotal = (unitPriceINR + personalizationPriceINR) * item.quantity
+    subtotalINR += itemTotal
 
     const primaryImage = product.images[0]?.url
 
@@ -136,8 +134,8 @@ export async function createCheckoutSession(
       productId: item.productId,
       variantId: item.variantId,
       quantity: item.quantity,
-      unitPrice,
-      personalizationPrice,
+      unitPrice: unitPriceINR,
+      personalizationPrice: personalizationPriceINR,
       personalizationData: item.personalizationData,
       previewImageUrl: item.previewImageUrl,
       productSnapshot: {
@@ -146,57 +144,17 @@ export async function createCheckoutSession(
         imageUrl: primaryImage,
       },
     })
-
-    stripeLineItems.push({
-      price_data: {
-        currency: CURRENCY.toLowerCase(),
-        product_data: {
-          name: product.name,
-          ...(primaryImage ? { images: [primaryImage] } : {}),
-        },
-        unit_amount: Math.round((unitPrice + personalizationPrice) * 100),
-      },
-      quantity: item.quantity,
-    })
   }
 
-  // Calculate shipping
+  // Calculate shipping in INR
   const shippingAmount =
-    subtotal >= FREE_SHIPPING_THRESHOLD ? 0 : SHIPPING_COST
+    subtotalINR >= FREE_SHIPPING_THRESHOLD_INR ? 0 : SHIPPING_COST_INR
 
-  // Calculate gift wrap
-  const giftWrapAmount =
-    giftOptions.giftWrap ? GIFT_WRAP_COST : 0
+  // Calculate gift wrap in INR
+  const giftWrapAmount = giftOptions.giftWrap ? GIFT_WRAP_COST_INR : 0
 
-  const totalAmount = subtotal + shippingAmount + giftWrapAmount
-
-  // Add shipping as a line item if applicable
-  if (shippingAmount > 0) {
-    stripeLineItems.push({
-      price_data: {
-        currency: CURRENCY.toLowerCase(),
-        product_data: {
-          name: 'Shipping',
-        },
-        unit_amount: Math.round(shippingAmount * 100),
-      },
-      quantity: 1,
-    })
-  }
-
-  // Add gift wrap as a line item if applicable
-  if (giftWrapAmount > 0) {
-    stripeLineItems.push({
-      price_data: {
-        currency: CURRENCY.toLowerCase(),
-        product_data: {
-          name: 'Gift Wrap',
-        },
-        unit_amount: Math.round(giftWrapAmount * 100),
-      },
-      quantity: 1,
-    })
-  }
+  const totalAmount = subtotalINR + shippingAmount + giftWrapAmount
+  const merchantTransactionId = generateMerchantTransactionId()
 
   // Create order in DB with PENDING status
   const order = await db.order.create({
@@ -204,13 +162,14 @@ export async function createCheckoutSession(
       userId: dbUserId,
       orderNumber: generateOrderNumber(),
       status: 'PENDING',
-      subtotal,
+      subtotal: subtotalINR,
       shippingAmount,
       giftWrapAmount,
       discountAmount: 0,
       totalAmount,
-      currency: CURRENCY,
-      paymentMethod: 'stripe',
+      currency: CURRENCY_INR,
+      paymentMethod: 'phonepe',
+      phonepeOrderId: merchantTransactionId,
       shippingAddress: shippingAddress as object,
       isGift: giftOptions.isGift ?? false,
       giftMessage: giftOptions.giftMessage,
@@ -232,27 +191,29 @@ export async function createCheckoutSession(
     },
   })
 
-  // Create Stripe Checkout Session
+  // Create PhonePe payment
   const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000'
 
-  const session = await stripe.checkout.sessions.create({
-    line_items: stripeLineItems,
-    mode: 'payment',
-    success_url: `${baseUrl}/order/confirmation?session_id={CHECKOUT_SESSION_ID}`,
-    cancel_url: `${baseUrl}/cart`,
-    metadata: {
-      orderId: order.id.toString(),
-    },
+  const result = await createPhonePePayment({
+    merchantTransactionId,
+    amount: Math.round(totalAmount * 100), // Convert to paise
+    redirectUrl: `${baseUrl}/checkout/phonepe-return?txnId=${merchantTransactionId}`,
+    callbackUrl: `${baseUrl}/api/webhooks/phonepe`,
+    merchantUserId: dbUserId ? dbUserId.toString() : 'GUEST',
   })
 
-  // Store Stripe session id on the order
-  await db.order.update({
-    where: { id: order.id },
-    data: { stripeCheckoutSessionId: session.id },
-  })
+  if (!result.success) {
+    // Mark order as cancelled if payment creation fails
+    await db.order.update({
+      where: { id: order.id },
+      data: { status: 'CANCELLED' },
+    })
+    throw new Error(result.error || 'Failed to create PhonePe payment')
+  }
 
   return {
-    sessionId: session.id,
-    url: session.url,
+    orderId: order.id.toString(),
+    merchantTransactionId,
+    redirectUrl: result.redirectUrl,
   }
 }

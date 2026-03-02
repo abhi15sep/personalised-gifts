@@ -1,9 +1,14 @@
 export const SITE_NAME = 'PersonalisedGifts'
 export const SITE_DESCRIPTION = 'Unique personalised gifts, handcrafted with love. Find the perfect custom gift for every occasion.'
 export const CURRENCY = 'GBP'
+export const CURRENCY_INR = 'INR'
+export const GBP_TO_INR_RATE = 105
 export const SHIPPING_COST = 3.99
 export const FREE_SHIPPING_THRESHOLD = 40
 export const GIFT_WRAP_COST = 2.50
+export const SHIPPING_COST_INR = Math.round(SHIPPING_COST * GBP_TO_INR_RATE)
+export const FREE_SHIPPING_THRESHOLD_INR = Math.round(FREE_SHIPPING_THRESHOLD * GBP_TO_INR_RATE)
+export const GIFT_WRAP_COST_INR = Math.round(GIFT_WRAP_COST * GBP_TO_INR_RATE)
 
 export const OCCASIONS = [
   { name: 'Birthday', slug: 'birthday', icon: '🎂' },
