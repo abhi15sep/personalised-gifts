@@ -57,7 +57,7 @@ export default async function WishlistPage() {
           {wishlistItems.map((item) => (
             <Card key={item.id} className="overflow-hidden">
               <Link href={`/products/${item.product.slug}`}>
-                <div className="relative aspect-square bg-warm-100">
+                <div className="relative aspect-square bg-gray-100">
                   {item.product.images[0] ? (
                     <Image
                       src={item.product.images[0].url}
@@ -67,14 +67,14 @@ export default async function WishlistPage() {
                     />
                   ) : (
                     <div className="flex h-full items-center justify-center">
-                      <ShoppingBag className="h-12 w-12 text-warm-300" />
+                      <ShoppingBag className="h-12 w-12 text-gray-300" />
                     </div>
                   )}
                 </div>
               </Link>
               <CardContent className="p-4">
                 <Link href={`/products/${item.product.slug}`}>
-                  <h3 className="font-medium hover:text-primary transition-colors">
+                  <h3 className="font-medium hover:text-rose transition-colors">
                     {item.product.name}
                   </h3>
                 </Link>

@@ -10,6 +10,39 @@ export const SHIPPING_COST_INR = Math.round(SHIPPING_COST * GBP_TO_INR_RATE)
 export const FREE_SHIPPING_THRESHOLD_INR = Math.round(FREE_SHIPPING_THRESHOLD * GBP_TO_INR_RATE)
 export const GIFT_WRAP_COST_INR = Math.round(GIFT_WRAP_COST * GBP_TO_INR_RATE)
 
+export const PRODUCT_IMAGES: Record<string, string> = {
+  'personalised-name-mug': 'https://images.unsplash.com/photo-1514228742587-6b1558fcca3d?w=600&h=600&fit=crop',
+  'engraved-heart-necklace': 'https://images.unsplash.com/photo-1515562141589-67f0d569b6fc?w=600&h=600&fit=crop',
+  'custom-photo-cushion': 'https://images.unsplash.com/photo-1629949009765-40fc74c9ec21?w=600&h=600&fit=crop',
+  'custom-star-map-print': 'https://images.unsplash.com/photo-1579783902614-a3fb3927b6a5?w=600&h=600&fit=crop',
+  'custom-family-portrait': 'https://images.unsplash.com/photo-1513364776144-60967b0f800f?w=600&h=600&fit=crop',
+  'engraved-wooden-photo-frame': 'https://images.unsplash.com/photo-1524592094714-0f0654e20314?w=600&h=600&fit=crop',
+  'personalised-baby-blanket': 'https://images.unsplash.com/photo-1519689680058-324335c77eba?w=600&h=600&fit=crop',
+  'recipe-book': 'https://images.unsplash.com/photo-1544947950-fa07a98d237f?w=600&h=600&fit=crop',
+  'custom-coordinates-necklace': 'https://images.unsplash.com/photo-1573408301185-9146fe634ad0?w=600&h=600&fit=crop',
+  'hand-stamped-silver-bracelet': 'https://images.unsplash.com/photo-1531346878377-a5be20888e57?w=600&h=600&fit=crop',
+  'wedding-print': 'https://images.unsplash.com/photo-1606800052052-a08af7148866?w=600&h=600&fit=crop',
+  'whisky-glass-set': 'https://images.unsplash.com/photo-1570598912132-0ba1dc952b7d?w=600&h=600&fit=crop',
+  'personalised-chopping-board': 'https://images.unsplash.com/photo-1495360010541-f48722b34f7d?w=600&h=600&fit=crop',
+  'engraved-leather-keyring': 'https://images.unsplash.com/photo-1524661135-423995f22d0b?w=600&h=600&fit=crop',
+  'rose-gold-pen': 'https://images.unsplash.com/photo-1585336261022-680e295ce3fe?w=600&h=600&fit=crop',
+}
+
+export const HERO_IMAGE = 'https://images.unsplash.com/photo-1549465220-1a8b9238f939?w=1600&h=600&fit=crop'
+
+export const OCCASION_IMAGES: Record<string, string> = {
+  'birthday': 'https://images.unsplash.com/photo-1558636508-e0db3814bd1d?w=400&h=300&fit=crop',
+  'wedding': 'https://images.unsplash.com/photo-1519741497674-611481863552?w=400&h=300&fit=crop',
+  'anniversary': 'https://images.unsplash.com/photo-1518199266791-5375a83190b7?w=400&h=300&fit=crop',
+  'new-baby': 'https://images.unsplash.com/photo-1555252333-9f8e92e65df9?w=400&h=300&fit=crop',
+  'christmas': 'https://images.unsplash.com/photo-1512389142860-9c449e58a814?w=400&h=300&fit=crop',
+  'graduation': 'https://images.unsplash.com/photo-1523050854058-8df90110c476?w=400&h=300&fit=crop',
+  'valentines-day': 'https://images.unsplash.com/photo-1518199266791-5375a83190b7?w=400&h=300&fit=crop',
+  'mothers-day': 'https://images.unsplash.com/photo-1462275646964-a0e3c11f18a6?w=400&h=300&fit=crop',
+  'fathers-day': 'https://images.unsplash.com/photo-1490578474895-699cd4e2cf59?w=400&h=300&fit=crop',
+  'thank-you': 'https://images.unsplash.com/photo-1606567595334-d39972c85dbe?w=400&h=300&fit=crop',
+}
+
 export const OCCASIONS = [
   { name: 'Birthday', slug: 'birthday', icon: '🎂' },
   { name: 'Wedding', slug: 'wedding', icon: '💒' },

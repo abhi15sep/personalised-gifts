@@ -48,7 +48,7 @@ function ClerkAuth() {
         <Button
           variant="ghost"
           size="icon"
-          className="text-warm-700 hover:text-warm-900 hover:bg-warm-100"
+          className="text-gray-600 hover:text-charcoal hover:bg-gray-100"
         >
           <User className="h-5 w-5" />
           <span className="sr-only">Sign in</span>
@@ -60,7 +60,7 @@ function ClerkAuth() {
       <Button
         variant="ghost"
         size="icon"
-        className="text-warm-700 hover:text-warm-900 hover:bg-warm-100"
+        className="text-gray-600 hover:text-charcoal hover:bg-gray-100"
         asChild
       >
         <Link href="/sign-in">
@@ -77,12 +77,12 @@ export function SiteHeader() {
   const itemCount = useCartStore((s) => s.getItemCount())
 
   return (
-    <header className="sticky top-0 z-50 w-full border-b border-warm-200 bg-warm-50/95 backdrop-blur supports-[backdrop-filter]:bg-warm-50/80">
+    <header className="sticky top-0 z-50 w-full border-b border-gray-200 bg-white/95 backdrop-blur supports-[backdrop-filter]:bg-white/80">
       <div className="mx-auto flex h-16 max-w-7xl items-center justify-between gap-4 px-4 sm:px-6 lg:px-8">
         {/* Logo */}
         <Link href="/" className="shrink-0">
-          <span className="font-heading text-xl font-bold tracking-tight text-warm-800 sm:text-2xl">
-            Personalised<span className="text-gold">Gifts</span>
+          <span className="font-heading text-xl font-bold tracking-tight text-charcoal sm:text-2xl">
+            Personalised<span className="text-rose">Gifts</span>
           </span>
         </Link>
 
@@ -92,7 +92,7 @@ export function SiteHeader() {
             <Link
               key={link.href}
               href={link.href}
-              className="rounded-md px-3 py-2 text-sm font-medium text-warm-700 transition-colors hover:bg-warm-100 hover:text-warm-900"
+              className="rounded-md px-3 py-2 text-sm font-medium text-gray-600 transition-colors hover:bg-gray-100 hover:text-charcoal"
             >
               {link.label}
             </Link>
@@ -106,7 +106,7 @@ export function SiteHeader() {
             <Input
               type="search"
               placeholder="Search gifts..."
-              className="h-9 pl-9 bg-white/80 border-warm-200 focus-visible:ring-gold/30"
+              className="h-9 pl-9 bg-gray-50 border-gray-200 focus-visible:ring-rose/30"
             />
           </div>
         </div>
@@ -117,7 +117,7 @@ export function SiteHeader() {
           <Button
             variant="ghost"
             size="icon"
-            className="md:hidden text-warm-700 hover:text-warm-900 hover:bg-warm-100"
+            className="md:hidden text-gray-600 hover:text-charcoal hover:bg-gray-100"
             asChild
           >
             <Link href="/search">
@@ -130,7 +130,7 @@ export function SiteHeader() {
           <Button
             variant="ghost"
             size="icon"
-            className="hidden text-warm-700 hover:text-warm-900 hover:bg-warm-100 sm:inline-flex"
+            className="hidden text-gray-600 hover:text-charcoal hover:bg-gray-100 sm:inline-flex"
             asChild
           >
             <Link href="/account/wishlist">
@@ -143,13 +143,13 @@ export function SiteHeader() {
           <Button
             variant="ghost"
             size="icon"
-            className="relative text-warm-700 hover:text-warm-900 hover:bg-warm-100"
+            className="relative text-gray-600 hover:text-charcoal hover:bg-gray-100"
             asChild
           >
             <Link href="/cart">
               <ShoppingBag className="h-5 w-5" />
               {itemCount > 0 && (
-                <Badge className="absolute -right-1 -top-1 flex h-5 w-5 items-center justify-center p-0 text-[10px] bg-gold text-warm-900 border-0">
+                <Badge className="absolute -right-1 -top-1 flex h-5 w-5 items-center justify-center p-0 text-[10px] bg-rose text-white border-0">
                   {itemCount > 99 ? "99+" : itemCount}
                 </Badge>
               )}
@@ -166,16 +166,16 @@ export function SiteHeader() {
               <Button
                 variant="ghost"
                 size="icon"
-                className="md:hidden text-warm-700 hover:text-warm-900 hover:bg-warm-100"
+                className="md:hidden text-gray-600 hover:text-charcoal hover:bg-gray-100"
               >
                 <Menu className="h-5 w-5" />
                 <span className="sr-only">Menu</span>
               </Button>
             </SheetTrigger>
-            <SheetContent side="left" className="w-72 bg-warm-50">
+            <SheetContent side="left" className="w-72 bg-white">
               <SheetHeader>
-                <SheetTitle className="font-heading text-lg text-warm-800">
-                  Personalised<span className="text-gold">Gifts</span>
+                <SheetTitle className="font-heading text-lg text-charcoal">
+                  Personalised<span className="text-rose">Gifts</span>
                 </SheetTitle>
               </SheetHeader>
               <nav className="flex flex-col gap-1 px-4">
@@ -184,7 +184,7 @@ export function SiteHeader() {
                     key={link.href}
                     href={link.href}
                     onClick={() => setMobileOpen(false)}
-                    className="rounded-md px-3 py-2.5 text-sm font-medium text-warm-700 transition-colors hover:bg-warm-100 hover:text-warm-900"
+                    className="rounded-md px-3 py-2.5 text-sm font-medium text-gray-600 transition-colors hover:bg-gray-100 hover:text-charcoal"
                   >
                     {link.label}
                   </Link>
@@ -192,7 +192,7 @@ export function SiteHeader() {
                 <Link
                   href="/account/wishlist"
                   onClick={() => setMobileOpen(false)}
-                  className="flex items-center gap-2 rounded-md px-3 py-2.5 text-sm font-medium text-warm-700 transition-colors hover:bg-warm-100 hover:text-warm-900"
+                  className="flex items-center gap-2 rounded-md px-3 py-2.5 text-sm font-medium text-gray-600 transition-colors hover:bg-gray-100 hover:text-charcoal"
                 >
                   <Heart className="h-4 w-4" />
                   Wishlist
@@ -205,7 +205,7 @@ export function SiteHeader() {
                   <Input
                     type="search"
                     placeholder="Search gifts..."
-                    className="pl-9 bg-white/80 border-warm-200"
+                    className="pl-9 bg-gray-50 border-gray-200"
                   />
                 </div>
               </div>

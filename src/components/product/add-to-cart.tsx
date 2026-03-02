@@ -98,7 +98,7 @@ export function AddToCart({
       {/* Variant Selector */}
       {variants.length > 0 && (
         <div className="mb-5">
-          <Label className="mb-2 text-sm font-semibold text-warm-800">
+          <Label className="mb-2 text-sm font-semibold text-charcoal">
             Size
           </Label>
           <RadioGroup
@@ -114,7 +114,7 @@ export function AddToCart({
                 />
                 <Label
                   htmlFor={`variant-${variant.value}`}
-                  className="text-sm font-normal text-warm-700 cursor-pointer"
+                  className="text-sm font-normal text-gray-600 cursor-pointer"
                 >
                   {variant.label}
                 </Label>
@@ -126,8 +126,8 @@ export function AddToCart({
 
       {/* Personalisation Section */}
       {isPersonalizable && (
-        <div className="rounded-lg border border-warm-200 bg-warm-50 p-4">
-          <h3 className="mb-3 text-sm font-semibold text-warm-800 uppercase tracking-wide">
+        <div className="rounded-lg border border-gray-200 bg-[#f8f9fa] p-4">
+          <h3 className="mb-3 text-sm font-semibold text-charcoal uppercase tracking-wide">
             Personalisation
           </h3>
 
@@ -135,7 +135,7 @@ export function AddToCart({
           <div className="mb-3">
             <Label
               htmlFor="personalise-name"
-              className="mb-1.5 text-sm text-warm-700"
+              className="mb-1.5 text-sm text-gray-600"
             >
               Your Name
             </Label>
@@ -145,15 +145,15 @@ export function AddToCart({
               maxLength={20}
               value={personaliseName}
               onChange={(e) => setPersonaliseName(e.target.value)}
-              className="mt-1 border-warm-200 bg-white"
+              className="mt-1 border-gray-200 bg-white"
             />
           </div>
 
           {/* Font Selector */}
           <div className="mb-3">
-            <Label className="mb-1.5 text-sm text-warm-700">Font</Label>
+            <Label className="mb-1.5 text-sm text-gray-600">Font</Label>
             <Select value={selectedFont} onValueChange={setSelectedFont}>
-              <SelectTrigger className="mt-1 w-full border-warm-200 bg-white">
+              <SelectTrigger className="mt-1 w-full border-gray-200 bg-white">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
@@ -168,17 +168,17 @@ export function AddToCart({
 
           {/* Colour Swatches */}
           <div>
-            <Label className="mb-1.5 text-sm text-warm-700">Colour</Label>
+            <Label className="mb-1.5 text-sm text-gray-600">Colour</Label>
             <div className="mt-2 flex flex-wrap gap-2">
               {PERSONALISATION_COLOURS.map((colour) => (
                 <button
                   key={colour.value}
                   title={colour.name}
                   onClick={() => setSelectedColour(colour.value)}
-                  className={`h-8 w-8 rounded-full border-2 transition-all hover:scale-110 focus:outline-none focus:ring-2 focus:ring-warm-400 focus:ring-offset-2 ${
+                  className={`h-8 w-8 rounded-full border-2 transition-all hover:scale-110 focus:outline-none focus:ring-2 focus:ring-rose/40 focus:ring-offset-2 ${
                     selectedColour === colour.value
-                      ? "border-warm-700 scale-110"
-                      : "border-warm-200 hover:border-warm-500"
+                      ? "border-charcoal scale-110"
+                      : "border-gray-200 hover:border-gray-400"
                   }`}
                   style={{ backgroundColor: colour.value }}
                 />
@@ -190,22 +190,22 @@ export function AddToCart({
 
       {/* Quantity & Add to Cart */}
       <div className="mt-5 flex items-center gap-3">
-        <div className="flex items-center rounded-md border border-warm-200">
+        <div className="flex items-center rounded-lg border border-gray-200">
           <Button
             variant="ghost"
             size="icon"
-            className="h-10 w-10 rounded-r-none text-warm-700 hover:bg-warm-100"
+            className="h-10 w-10 rounded-r-none text-gray-600 hover:bg-gray-100"
             onClick={() => setQuantity(Math.max(1, quantity - 1))}
           >
             -
           </Button>
-          <span className="flex h-10 w-12 items-center justify-center text-sm font-medium text-warm-800 border-x border-warm-200">
+          <span className="flex h-10 w-12 items-center justify-center text-sm font-medium text-charcoal border-x border-gray-200">
             {quantity}
           </span>
           <Button
             variant="ghost"
             size="icon"
-            className="h-10 w-10 rounded-l-none text-warm-700 hover:bg-warm-100"
+            className="h-10 w-10 rounded-l-none text-gray-600 hover:bg-gray-100"
             onClick={() => setQuantity(quantity + 1)}
           >
             +
@@ -216,7 +216,7 @@ export function AddToCart({
           className={`flex-1 h-11 text-base font-semibold transition-colors ${
             added
               ? "bg-green-600 text-white hover:bg-green-700"
-              : "bg-warm-700 text-warm-50 hover:bg-warm-800"
+              : "bg-rose text-white hover:bg-rose-dark"
           }`}
           onClick={handleAddToCart}
         >
@@ -237,7 +237,7 @@ export function AddToCart({
       {/* Wishlist */}
       <Button
         variant="outline"
-        className="mt-3 w-full border-warm-300 text-warm-700 hover:bg-warm-100"
+        className="mt-3 w-full border-gray-300 text-gray-600 hover:bg-gray-100 hover:text-rose"
       >
         <Heart className="mr-2 h-4 w-4" />
         Add to Wishlist

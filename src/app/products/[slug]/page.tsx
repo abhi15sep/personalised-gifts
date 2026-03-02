@@ -1,6 +1,8 @@
 import Link from "next/link"
+import Image from "next/image"
 
 import { formatPrice, getDeliveryEstimate } from "@/lib/format"
+import { PRODUCT_IMAGES } from "@/lib/constants"
 import {
   Breadcrumb,
   BreadcrumbItem,
@@ -57,7 +59,7 @@ function StarRating({ rating, count }: { rating: number; count: number }) {
           </span>
         ))}
       </div>
-      <span className="text-sm text-warm-600">({count} reviews)</span>
+      <span className="text-sm text-gray-500">({count} reviews)</span>
     </div>
   )
 }
@@ -70,6 +72,7 @@ export default async function ProductDetailPage({
   const { slug } = await params
   const product = PLACEHOLDER_PRODUCT
   const deliveryEstimate = getDeliveryEstimate(product.productionDays)
+  const productImage = PRODUCT_IMAGES[product.slug]
 
   return (
     <div className="mx-auto max-w-7xl px-4 py-6 sm:px-6 lg:px-8">
@@ -94,16 +97,27 @@ export default async function ProductDetailPage({
       <div className="grid gap-8 lg:grid-cols-2 lg:gap-12">
         {/* Left: Images */}
         <div>
-          {/* Main Image Placeholder */}
-          <div className="relative aspect-square overflow-hidden rounded-lg bg-gradient-to-br from-warm-100 via-warm-50 to-warm-200">
+          {/* Main Image */}
+          <div className="relative aspect-square overflow-hidden rounded-xl bg-gray-100">
             {product.isPersonalizable && (
-              <Badge className="absolute left-3 top-3 bg-gold text-warm-900 border-0 text-xs font-semibold uppercase tracking-wide">
+              <Badge className="absolute left-3 top-3 z-10 bg-rose text-white border-0 text-xs font-semibold uppercase tracking-wide">
                 Personalise
               </Badge>
             )}
-            <div className="flex h-full items-center justify-center">
-              <span className="text-8xl text-warm-300">{"\u2615"}</span>
-            </div>
+            {productImage ? (
+              <Image
+                src={productImage}
+                alt={product.name}
+                fill
+                priority
+                sizes="(max-width: 1024px) 100vw, 50vw"
+                className="object-cover"
+              />
+            ) : (
+              <div className="flex h-full items-center justify-center text-muted-foreground">
+                No image
+              </div>
+            )}
           </div>
 
           {/* Thumbnail Strip */}
@@ -111,15 +125,25 @@ export default async function ProductDetailPage({
             {[0, 1, 2, 3].map((i) => (
               <button
                 key={i}
-                className={`relative aspect-square w-20 overflow-hidden rounded-md border-2 transition-colors ${
+                className={`relative aspect-square w-20 overflow-hidden rounded-lg border-2 transition-colors ${
                   i === 0
-                    ? "border-warm-600"
-                    : "border-warm-200 hover:border-warm-400"
-                } bg-gradient-to-br from-warm-100 to-warm-200`}
+                    ? "border-rose"
+                    : "border-gray-200 hover:border-gray-400"
+                } bg-gray-100`}
               >
-                <div className="flex h-full items-center justify-center">
-                  <span className="text-2xl text-warm-300">{"\u2615"}</span>
-                </div>
+                {productImage ? (
+                  <Image
+                    src={productImage}
+                    alt={`${product.name} view ${i + 1}`}
+                    fill
+                    sizes="80px"
+                    className="object-cover"
+                  />
+                ) : (
+                  <div className="flex h-full items-center justify-center text-muted-foreground text-xs">
+                    {i + 1}
+                  </div>
+                )}
               </button>
             ))}
           </div>
@@ -127,7 +151,7 @@ export default async function ProductDetailPage({
 
         {/* Right: Details */}
         <div>
-          <h1 className="font-heading text-2xl font-bold text-warm-900 sm:text-3xl">
+          <h1 className="font-heading text-2xl font-bold text-charcoal sm:text-3xl">
             {product.name}
           </h1>
 
@@ -138,17 +162,17 @@ export default async function ProductDetailPage({
 
           {/* Price */}
           <div className="mt-4 flex items-baseline gap-3">
-            <span className="text-2xl font-bold text-warm-800">
+            <span className="text-2xl font-bold text-charcoal">
               From {formatPrice(product.basePrice / 100)}
             </span>
             {product.compareAtPrice && product.compareAtPrice > product.basePrice && (
-              <span className="text-lg text-warm-500 line-through">
+              <span className="text-lg text-gray-400 line-through">
                 {formatPrice(product.compareAtPrice / 100)}
               </span>
             )}
           </div>
 
-          <Separator className="my-5 bg-warm-200" />
+          <Separator className="my-5 bg-gray-200" />
 
           {/* Client Component: Variants, Personalisation, Quantity, Add to Cart, Wishlist */}
           <AddToCart
@@ -158,10 +182,11 @@ export default async function ProductDetailPage({
             price={product.basePrice}
             isPersonalizable={product.isPersonalizable}
             variants={product.variants}
+            imageUrl={productImage}
           />
 
           {/* Delivery Estimate */}
-          <div className="mt-5 flex items-center gap-2 rounded-md bg-warm-100 px-3 py-2 text-sm text-warm-700">
+          <div className="mt-5 flex items-center gap-2 rounded-lg bg-[#f8f9fa] px-3 py-2 text-sm text-gray-600">
             <span>{"\uD83D\uDCE6"}</span>
             <span>Est. delivery: {deliveryEstimate}</span>
           </div>
@@ -171,20 +196,20 @@ export default async function ProductDetailPage({
       {/* Tabs Section */}
       <div className="mt-12">
         <Tabs defaultValue="description">
-          <TabsList className="w-full justify-start border-b border-warm-200 bg-transparent" variant="line">
-            <TabsTrigger value="description" className="text-warm-700 data-[state=active]:text-warm-900">
+          <TabsList className="w-full justify-start border-b border-gray-200 bg-transparent" variant="line">
+            <TabsTrigger value="description" className="text-gray-600 data-[state=active]:text-charcoal">
               Description
             </TabsTrigger>
-            <TabsTrigger value="delivery" className="text-warm-700 data-[state=active]:text-warm-900">
+            <TabsTrigger value="delivery" className="text-gray-600 data-[state=active]:text-charcoal">
               Delivery Info
             </TabsTrigger>
-            <TabsTrigger value="reviews" className="text-warm-700 data-[state=active]:text-warm-900">
+            <TabsTrigger value="reviews" className="text-gray-600 data-[state=active]:text-charcoal">
               Reviews
             </TabsTrigger>
           </TabsList>
 
           <TabsContent value="description" className="mt-4">
-            <div className="prose prose-warm max-w-none text-warm-700">
+            <div className="prose max-w-none text-gray-600">
               <p>{product.description}</p>
               <ul className="mt-4 space-y-1 text-sm">
                 <li>Premium ceramic material</li>
@@ -196,13 +221,13 @@ export default async function ProductDetailPage({
           </TabsContent>
 
           <TabsContent value="delivery" className="mt-4">
-            <div className="text-warm-700">
+            <div className="text-gray-600">
               <p>{product.deliveryInfo}</p>
             </div>
           </TabsContent>
 
           <TabsContent value="reviews" className="mt-4">
-            <div className="text-warm-700">
+            <div className="text-gray-600">
               <div className="mb-4">
                 <StarRating rating={product.rating} count={product.reviewCount} />
               </div>
@@ -211,16 +236,16 @@ export default async function ProductDetailPage({
                 { author: "James R.", rating: 4, text: "Great gift, well made. The personalisation looked fantastic. Would buy again." },
                 { author: "Emma T.", rating: 4, text: "Lovely quality and the packaging was gorgeous. Perfect birthday present." },
               ].map((review, i) => (
-                <div key={i} className="border-b border-warm-200 py-4 last:border-0">
+                <div key={i} className="border-b border-gray-200 py-4 last:border-0">
                   <div className="flex items-center gap-2">
-                    <span className="text-sm font-semibold text-warm-800">{review.author}</span>
+                    <span className="text-sm font-semibold text-charcoal">{review.author}</span>
                     <div className="flex text-gold text-sm">
                       {[1, 2, 3, 4, 5].map((star) => (
                         <span key={star}>{star <= review.rating ? "\u2605" : "\u2606"}</span>
                       ))}
                     </div>
                   </div>
-                  <p className="mt-1 text-sm text-warm-600">{review.text}</p>
+                  <p className="mt-1 text-sm text-gray-500">{review.text}</p>
                 </div>
               ))}
             </div>
@@ -230,29 +255,42 @@ export default async function ProductDetailPage({
 
       {/* You May Also Like */}
       <div className="mt-16">
-        <h2 className="font-heading text-2xl font-bold text-warm-900 mb-6">
+        <h2 className="font-heading text-2xl font-bold text-charcoal mb-6">
           You May Also Like
         </h2>
         <div className="grid grid-cols-2 gap-4 md:grid-cols-4 md:gap-6">
-          {SIMILAR_PRODUCTS.map((item) => (
-            <Link key={item.id} href={`/products/${item.slug}`} className="group">
-              <div className="overflow-hidden rounded-lg border border-warm-200 bg-white shadow-sm transition-shadow hover:shadow-md">
-                <div className="aspect-square bg-gradient-to-br from-warm-100 via-warm-50 to-warm-200">
-                  <div className="flex h-full items-center justify-center">
-                    <span className="text-4xl text-warm-300">{"\uD83C\uDF81"}</span>
+          {SIMILAR_PRODUCTS.map((item) => {
+            const imgUrl = PRODUCT_IMAGES[item.slug]
+            return (
+              <Link key={item.id} href={`/products/${item.slug}`} className="group">
+                <div className="overflow-hidden rounded-xl border border-gray-200 bg-white shadow-sm transition-all hover:shadow-lg">
+                  <div className="relative aspect-square overflow-hidden bg-gray-100">
+                    {imgUrl ? (
+                      <Image
+                        src={imgUrl}
+                        alt={item.name}
+                        fill
+                        sizes="(max-width: 640px) 50vw, 25vw"
+                        className="object-cover transition-transform duration-300 group-hover:scale-105"
+                      />
+                    ) : (
+                      <div className="flex h-full items-center justify-center text-muted-foreground">
+                        No image
+                      </div>
+                    )}
+                  </div>
+                  <div className="p-3">
+                    <h3 className="line-clamp-2 text-sm font-medium text-charcoal transition-colors group-hover:text-rose">
+                      {item.name}
+                    </h3>
+                    <p className="mt-1.5 text-sm font-semibold text-charcoal">
+                      {formatPrice(item.price / 100)}
+                    </p>
                   </div>
                 </div>
-                <div className="p-3">
-                  <h3 className="line-clamp-2 text-sm font-medium text-warm-800 transition-colors group-hover:text-warm-900">
-                    {item.name}
-                  </h3>
-                  <p className="mt-1.5 text-sm font-semibold text-warm-800">
-                    {formatPrice(item.price / 100)}
-                  </p>
-                </div>
-              </div>
-            </Link>
-          ))}
+              </Link>
+            )
+          })}
         </div>
       </div>
     </div>

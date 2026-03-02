@@ -49,16 +49,16 @@ export function ProductCard({ product }: ProductCardProps) {
   const primaryImage = product.images[0]
 
   return (
-    <Card className="group relative overflow-hidden border-warm-200 p-0 shadow-sm transition-shadow hover:shadow-md">
+    <Card className="group relative overflow-hidden border-gray-200 p-0 shadow-sm transition-all hover:shadow-lg">
       {/* Wishlist Button */}
       <Button
         variant="ghost"
         size="icon"
         onClick={() => setIsWishlisted(!isWishlisted)}
-        className="absolute right-2 top-2 z-10 h-8 w-8 rounded-full bg-white/80 backdrop-blur-sm hover:bg-white text-warm-600 hover:text-warm-900"
+        className="absolute right-2 top-2 z-10 h-8 w-8 rounded-full bg-white/80 backdrop-blur-sm hover:bg-white text-gray-500 hover:text-charcoal"
       >
         <Heart
-          className={cn("h-4 w-4", isWishlisted && "fill-red-500 text-red-500")}
+          className={cn("h-4 w-4", isWishlisted && "fill-rose text-rose")}
         />
         <span className="sr-only">
           {isWishlisted ? "Remove from wishlist" : "Add to wishlist"}
@@ -68,12 +68,12 @@ export function ProductCard({ product }: ProductCardProps) {
       {/* Badges */}
       <div className="absolute left-2 top-2 z-10 flex flex-col gap-1">
         {product.isPersonalizable && (
-          <Badge className="bg-gold text-warm-900 border-0 text-[10px] font-semibold uppercase tracking-wide">
+          <Badge className="bg-rose text-white border-0 text-[10px] font-semibold uppercase tracking-wide">
             Personalise
           </Badge>
         )}
         {hasDiscount && (
-          <Badge variant="destructive" className="text-[10px] font-semibold">
+          <Badge className="bg-gold text-white border-0 text-[10px] font-semibold">
             -{discountPercent}%
           </Badge>
         )}
@@ -81,7 +81,7 @@ export function ProductCard({ product }: ProductCardProps) {
 
       {/* Image */}
       <Link href={`/products/${product.slug}`} className="block">
-        <div className="relative aspect-square overflow-hidden bg-warm-100">
+        <div className="relative aspect-square overflow-hidden bg-gray-100">
           {primaryImage ? (
             <Image
               src={primaryImage.url}
@@ -101,7 +101,7 @@ export function ProductCard({ product }: ProductCardProps) {
       {/* Content */}
       <CardContent className="p-3 pt-2">
         <Link href={`/products/${product.slug}`} className="block">
-          <h3 className="line-clamp-2 text-sm font-medium text-warm-800 transition-colors group-hover:text-warm-900">
+          <h3 className="line-clamp-2 text-sm font-medium text-charcoal transition-colors group-hover:text-rose">
             {product.name}
           </h3>
         </Link>
@@ -109,7 +109,7 @@ export function ProductCard({ product }: ProductCardProps) {
           <span
             className={cn(
               "text-sm font-semibold",
-              hasDiscount ? "text-red-600" : "text-warm-800"
+              hasDiscount ? "text-rose" : "text-charcoal"
             )}
           >
             {formatPrice(product.basePrice)}

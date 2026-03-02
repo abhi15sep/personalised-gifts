@@ -1,5 +1,5 @@
 import type { Metadata } from "next"
-import { Inter, Playfair_Display } from "next/font/google"
+import { Inter, DM_Sans } from "next/font/google"
 import { ClerkProvider } from "@clerk/nextjs"
 import { Toaster } from "@/components/ui/sonner"
 import { SiteHeader } from "@/components/layout/site-header"
@@ -11,7 +11,7 @@ const inter = Inter({
   variable: "--font-sans",
 })
 
-const playfair = Playfair_Display({
+const dmSans = DM_Sans({
   subsets: ["latin"],
   variable: "--font-heading",
 })
@@ -40,7 +40,7 @@ export default function RootLayout({
   const body = (
     <html lang="en" suppressHydrationWarning>
       <body
-        className={`${inter.variable} ${playfair.variable} font-sans antialiased`}
+        className={`${inter.variable} ${dmSans.variable} font-sans antialiased`}
       >
         <div className="relative flex min-h-screen flex-col">
           <SiteHeader />

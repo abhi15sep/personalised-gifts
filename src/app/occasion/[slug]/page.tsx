@@ -1,16 +1,17 @@
 import Link from "next/link"
+import Image from "next/image"
 import { notFound } from "next/navigation"
 import { ChevronRight } from "lucide-react"
 import { Card, CardContent } from "@/components/ui/card"
-import { OCCASIONS } from "@/lib/constants"
+import { OCCASIONS, PRODUCT_IMAGES, OCCASION_IMAGES } from "@/lib/constants"
 
 const PLACEHOLDER_PRODUCTS = [
-  { name: "Personalised Name Mug", price: "£14.99" },
-  { name: "Engraved Silver Bracelet", price: "£29.99" },
-  { name: "Custom Photo Canvas", price: "£24.99" },
-  { name: "Embroidered Cushion", price: "£19.99" },
-  { name: "Personalised Keyring", price: "£9.99" },
-  { name: "Custom Family Print", price: "£22.99" },
+  { name: "Personalised Name Mug", price: "£14.99", slug: "personalised-name-mug" },
+  { name: "Engraved Heart Necklace", price: "£29.99", slug: "engraved-heart-necklace" },
+  { name: "Custom Photo Cushion", price: "£24.99", slug: "custom-photo-cushion" },
+  { name: "Star Map Print", price: "£34.99", slug: "custom-star-map-print" },
+  { name: "Personalised Baby Blanket", price: "£32.99", slug: "personalised-baby-blanket" },
+  { name: "Custom Family Portrait", price: "£59.99", slug: "custom-family-portrait" },
 ]
 
 export async function generateStaticParams() {
@@ -37,6 +38,8 @@ export default async function OccasionPage({ params }: { params: Promise<{ slug:
     notFound()
   }
 
+  const occasionImage = OCCASION_IMAGES[occasion.slug]
+
   return (
     <div className="px-4 py-8 md:py-12">
       <div className="mx-auto max-w-6xl">
@@ -51,31 +54,68 @@ export default async function OccasionPage({ params }: { params: Promise<{ slug:
           <span className="text-foreground">{occasion.name}</span>
         </nav>
 
-        {/* Heading */}
-        <div className="mb-10">
-          <span className="text-4xl">{occasion.icon}</span>
-          <h1 className="font-heading mt-2 text-3xl font-bold text-foreground md:text-4xl">
-            {occasion.name} Gifts
-          </h1>
-          <p className="mt-2 text-muted-foreground">
-            Find the perfect personalised gift for {occasion.name.toLowerCase()}
-          </p>
-        </div>
+        {/* Hero Banner */}
+        {occasionImage && (
+          <div className="relative mb-10 h-48 overflow-hidden rounded-2xl md:h-64">
+            <Image
+              src={occasionImage}
+              alt={`${occasion.name} gifts`}
+              fill
+              className="object-cover"
+            />
+            <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/20 to-transparent" />
+            <div className="absolute bottom-6 left-6">
+              <h1 className="font-heading text-3xl font-bold text-white md:text-4xl">
+                {occasion.name} Gifts
+              </h1>
+              <p className="mt-1 text-white/80">
+                Find the perfect personalised gift for {occasion.name.toLowerCase()}
+              </p>
+            </div>
+          </div>
+        )}
 
-        {/* Product Grid (placeholder) */}
+        {!occasionImage && (
+          <div className="mb-10">
+            <h1 className="font-heading text-3xl font-bold text-charcoal md:text-4xl">
+              {occasion.name} Gifts
+            </h1>
+            <p className="mt-2 text-muted-foreground">
+              Find the perfect personalised gift for {occasion.name.toLowerCase()}
+            </p>
+          </div>
+        )}
+
+        {/* Product Grid */}
         <div className="grid grid-cols-2 gap-4 md:grid-cols-3 lg:grid-cols-4 md:gap-6">
-          {PLACEHOLDER_PRODUCTS.map((product) => (
-            <Card
-              key={product.name}
-              className="group overflow-hidden border-warm-200 transition-shadow hover:shadow-md"
-            >
-              <div className="aspect-square bg-gradient-to-br from-warm-100 to-warm-200" />
-              <CardContent className="p-4">
-                <h3 className="text-sm font-medium text-foreground">{product.name}</h3>
-                <p className="mt-1 text-sm font-semibold text-primary">{product.price}</p>
-              </CardContent>
-            </Card>
-          ))}
+          {PLACEHOLDER_PRODUCTS.map((product) => {
+            const imageUrl = PRODUCT_IMAGES[product.slug]
+            return (
+              <Link key={product.name} href={`/products/${product.slug}`} className="group">
+                <Card className="overflow-hidden border-gray-200 transition-all hover:shadow-lg">
+                  <div className="relative aspect-square overflow-hidden bg-gray-100">
+                    {imageUrl ? (
+                      <Image
+                        src={imageUrl}
+                        alt={product.name}
+                        fill
+                        sizes="(max-width: 640px) 50vw, 25vw"
+                        className="object-cover transition-transform duration-300 group-hover:scale-105"
+                      />
+                    ) : (
+                      <div className="flex h-full items-center justify-center text-muted-foreground">
+                        No image
+                      </div>
+                    )}
+                  </div>
+                  <CardContent className="p-4">
+                    <h3 className="text-sm font-medium text-charcoal group-hover:text-rose transition-colors">{product.name}</h3>
+                    <p className="mt-1 text-sm font-semibold text-rose">{product.price}</p>
+                  </CardContent>
+                </Card>
+              </Link>
+            )
+          })}
         </div>
       </div>
     </div>

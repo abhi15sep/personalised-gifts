@@ -187,8 +187,8 @@ export default function CheckoutPage() {
                     currentStep > step.number
                       ? "bg-green-600 text-white"
                       : currentStep === step.number
-                        ? "bg-warm-700 text-warm-50"
-                        : "bg-warm-200 text-warm-500"
+                        ? "bg-rose text-white"
+                        : "bg-gray-200 text-gray-400"
                   }`}
                 >
                   {currentStep > step.number ? (
@@ -200,8 +200,8 @@ export default function CheckoutPage() {
                 <span
                   className={`hidden text-sm font-medium sm:block ${
                     currentStep >= step.number
-                      ? "text-warm-900"
-                      : "text-warm-400"
+                      ? "text-charcoal"
+                      : "text-gray-400"
                   }`}
                 >
                   {step.label}
@@ -210,7 +210,7 @@ export default function CheckoutPage() {
               {index < STEPS.length - 1 && (
                 <div
                   className={`h-px w-8 sm:w-16 ${
-                    currentStep > step.number ? "bg-green-600" : "bg-warm-200"
+                    currentStep > step.number ? "bg-green-600" : "bg-gray-200"
                   }`}
                 />
               )}
@@ -223,9 +223,9 @@ export default function CheckoutPage() {
         {/* Left Column - Forms */}
         <div className="lg:col-span-2">
           {currentStep === 1 && (
-            <Card className="border-warm-200 bg-white">
+            <Card className="border-gray-200 bg-white">
               <CardHeader>
-                <CardTitle className="font-heading text-xl text-warm-900">
+                <CardTitle className="font-heading text-xl text-charcoal">
                   Shipping Details
                 </CardTitle>
               </CardHeader>
@@ -242,13 +242,13 @@ export default function CheckoutPage() {
                         name="fullName"
                         render={({ field }) => (
                           <FormItem>
-                            <FormLabel className="text-warm-700">
+                            <FormLabel className="text-gray-600">
                               Full Name
                             </FormLabel>
                             <FormControl>
                               <Input
                                 placeholder="John Smith"
-                                className="border-warm-200 bg-white"
+                                className="border-gray-200 bg-white"
                                 {...field}
                               />
                             </FormControl>
@@ -261,14 +261,14 @@ export default function CheckoutPage() {
                         name="email"
                         render={({ field }) => (
                           <FormItem>
-                            <FormLabel className="text-warm-700">
+                            <FormLabel className="text-gray-600">
                               Email
                             </FormLabel>
                             <FormControl>
                               <Input
                                 type="email"
                                 placeholder="john@example.com"
-                                className="border-warm-200 bg-white"
+                                className="border-gray-200 bg-white"
                                 {...field}
                               />
                             </FormControl>
@@ -284,14 +284,14 @@ export default function CheckoutPage() {
                       name="phone"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel className="text-warm-700">
+                          <FormLabel className="text-gray-600">
                             Phone Number
                           </FormLabel>
                           <FormControl>
                             <Input
                               type="tel"
                               placeholder="07700 900000"
-                              className="border-warm-200 bg-white"
+                              className="border-gray-200 bg-white"
                               {...field}
                             />
                           </FormControl>
@@ -306,13 +306,13 @@ export default function CheckoutPage() {
                       name="addressLine1"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel className="text-warm-700">
+                          <FormLabel className="text-gray-600">
                             Address Line 1
                           </FormLabel>
                           <FormControl>
                             <Input
                               placeholder="123 High Street"
-                              className="border-warm-200 bg-white"
+                              className="border-gray-200 bg-white"
                               {...field}
                             />
                           </FormControl>
@@ -326,13 +326,13 @@ export default function CheckoutPage() {
                       name="addressLine2"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel className="text-warm-700">
+                          <FormLabel className="text-gray-600">
                             Address Line 2 (Optional)
                           </FormLabel>
                           <FormControl>
                             <Input
                               placeholder="Flat 4, Building Name"
-                              className="border-warm-200 bg-white"
+                              className="border-gray-200 bg-white"
                               {...field}
                             />
                           </FormControl>
@@ -347,13 +347,13 @@ export default function CheckoutPage() {
                         name="city"
                         render={({ field }) => (
                           <FormItem>
-                            <FormLabel className="text-warm-700">
+                            <FormLabel className="text-gray-600">
                               City
                             </FormLabel>
                             <FormControl>
                               <Input
                                 placeholder="London"
-                                className="border-warm-200 bg-white"
+                                className="border-gray-200 bg-white"
                                 {...field}
                               />
                             </FormControl>
@@ -366,13 +366,13 @@ export default function CheckoutPage() {
                         name="county"
                         render={({ field }) => (
                           <FormItem>
-                            <FormLabel className="text-warm-700">
+                            <FormLabel className="text-gray-600">
                               County
                             </FormLabel>
                             <FormControl>
                               <Input
                                 placeholder="Greater London"
-                                className="border-warm-200 bg-white"
+                                className="border-gray-200 bg-white"
                                 {...field}
                               />
                             </FormControl>
@@ -385,13 +385,13 @@ export default function CheckoutPage() {
                         name="postcode"
                         render={({ field }) => (
                           <FormItem>
-                            <FormLabel className="text-warm-700">
+                            <FormLabel className="text-gray-600">
                               Postcode
                             </FormLabel>
                             <FormControl>
                               <Input
                                 placeholder="SW1A 1AA"
-                                className="border-warm-200 bg-white"
+                                className="border-gray-200 bg-white"
                                 {...field}
                               />
                             </FormControl>
@@ -406,14 +406,14 @@ export default function CheckoutPage() {
                       name="country"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel className="text-warm-700">
+                          <FormLabel className="text-gray-600">
                             Country
                           </FormLabel>
                           <FormControl>
                             <Input
                               placeholder="United Kingdom"
                               defaultValue="United Kingdom"
-                              className="border-warm-200 bg-white"
+                              className="border-gray-200 bg-white"
                               {...field}
                             />
                           </FormControl>
@@ -422,7 +422,7 @@ export default function CheckoutPage() {
                       )}
                     />
 
-                    <Separator className="bg-warm-200" />
+                    <Separator className="bg-gray-200" />
 
                     {/* Gift Options */}
                     <div className="space-y-3">
@@ -437,7 +437,7 @@ export default function CheckoutPage() {
                                 onCheckedChange={field.onChange}
                               />
                             </FormControl>
-                            <FormLabel className="text-sm font-normal text-warm-700 cursor-pointer">
+                            <FormLabel className="text-sm font-normal text-gray-600 cursor-pointer">
                               This is a gift
                             </FormLabel>
                           </FormItem>
@@ -451,13 +451,13 @@ export default function CheckoutPage() {
                             name="giftMessage"
                             render={({ field }) => (
                               <FormItem>
-                                <FormLabel className="text-warm-700">
+                                <FormLabel className="text-gray-600">
                                   Gift Message
                                 </FormLabel>
                                 <FormControl>
                                   <Textarea
                                     placeholder="Write a personal message..."
-                                    className="border-warm-200 bg-warm-50"
+                                    className="border-gray-200 bg-[#f8f9fa]"
                                     rows={3}
                                     {...field}
                                   />
@@ -477,7 +477,7 @@ export default function CheckoutPage() {
                                     onCheckedChange={field.onChange}
                                   />
                                 </FormControl>
-                                <FormLabel className="text-sm font-normal text-warm-700 cursor-pointer">
+                                <FormLabel className="text-sm font-normal text-gray-600 cursor-pointer">
                                   Add gift wrap (+{formatPrice(GIFT_WRAP_COST)})
                                 </FormLabel>
                               </FormItem>
@@ -489,7 +489,7 @@ export default function CheckoutPage() {
 
                     <Button
                       type="submit"
-                      className="w-full h-11 bg-warm-700 text-warm-50 hover:bg-warm-800 text-base font-semibold"
+                      className="w-full h-11 bg-rose text-white hover:bg-rose-dark text-base font-semibold"
                     >
                       Continue to Payment
                     </Button>
@@ -500,9 +500,9 @@ export default function CheckoutPage() {
           )}
 
           {currentStep === 2 && (
-            <Card className="border-warm-200 bg-white">
+            <Card className="border-gray-200 bg-white">
               <CardHeader>
-                <CardTitle className="font-heading text-xl text-warm-900">
+                <CardTitle className="font-heading text-xl text-charcoal">
                   Choose Payment Method
                 </CardTitle>
               </CardHeader>
@@ -512,57 +512,57 @@ export default function CheckoutPage() {
                   <button
                     type="button"
                     onClick={() => setPaymentMethod("stripe")}
-                    className={`flex items-center gap-3 rounded-lg border-2 p-4 text-left transition-colors ${
+                    className={`flex items-center gap-3 rounded-xl border-2 p-4 text-left transition-colors ${
                       paymentMethod === "stripe"
-                        ? "border-warm-700 bg-warm-50"
-                        : "border-warm-200 bg-white hover:border-warm-300"
+                        ? "border-rose bg-rose/5"
+                        : "border-gray-200 bg-white hover:border-gray-300"
                     }`}
                   >
                     <div
                       className={`flex h-10 w-10 items-center justify-center rounded-full ${
                         paymentMethod === "stripe"
-                          ? "bg-warm-700 text-white"
-                          : "bg-warm-100 text-warm-500"
+                          ? "bg-rose text-white"
+                          : "bg-gray-100 text-gray-400"
                       }`}
                     >
                       <CreditCard className="h-5 w-5" />
                     </div>
                     <div>
-                      <p className="font-semibold text-warm-900">
+                      <p className="font-semibold text-charcoal">
                         Card Payment
                       </p>
-                      <p className="text-xs text-warm-500">
+                      <p className="text-xs text-gray-400">
                         Pay in GBP via Stripe
                       </p>
                     </div>
                     {paymentMethod === "stripe" && (
-                      <Check className="ml-auto h-5 w-5 text-warm-700" />
+                      <Check className="ml-auto h-5 w-5 text-rose" />
                     )}
                   </button>
 
                   <button
                     type="button"
                     onClick={() => setPaymentMethod("phonepe")}
-                    className={`flex items-center gap-3 rounded-lg border-2 p-4 text-left transition-colors ${
+                    className={`flex items-center gap-3 rounded-xl border-2 p-4 text-left transition-colors ${
                       paymentMethod === "phonepe"
                         ? "border-purple-600 bg-purple-50"
-                        : "border-warm-200 bg-white hover:border-warm-300"
+                        : "border-gray-200 bg-white hover:border-gray-300"
                     }`}
                   >
                     <div
                       className={`flex h-10 w-10 items-center justify-center rounded-full ${
                         paymentMethod === "phonepe"
                           ? "bg-purple-600 text-white"
-                          : "bg-warm-100 text-warm-500"
+                          : "bg-gray-100 text-gray-400"
                       }`}
                     >
                       <Smartphone className="h-5 w-5" />
                     </div>
                     <div>
-                      <p className="font-semibold text-warm-900">
+                      <p className="font-semibold text-charcoal">
                         UPI / PhonePe
                       </p>
-                      <p className="text-xs text-warm-500">
+                      <p className="text-xs text-gray-400">
                         Pay in INR via UPI
                       </p>
                     </div>
@@ -579,14 +579,14 @@ export default function CheckoutPage() {
                   </div>
                 )}
 
-                <Separator className="bg-warm-200" />
+                <Separator className="bg-gray-200" />
 
                 {/* Pay Button */}
                 <Button
                   className={`w-full h-11 text-base font-semibold ${
                     paymentMethod === "phonepe"
                       ? "bg-purple-600 text-white hover:bg-purple-700"
-                      : "bg-warm-700 text-warm-50 hover:bg-warm-800"
+                      : "bg-rose text-white hover:bg-rose-dark"
                   }`}
                   onClick={handlePayment}
                   disabled={isProcessing}
@@ -605,7 +605,7 @@ export default function CheckoutPage() {
 
                 <Button
                   variant="ghost"
-                  className="w-full text-warm-600 hover:text-warm-800 hover:bg-warm-100"
+                  className="w-full text-gray-500 hover:text-charcoal hover:bg-gray-100"
                   onClick={() => setCurrentStep(1)}
                   disabled={isProcessing}
                 >
@@ -618,9 +618,9 @@ export default function CheckoutPage() {
 
         {/* Right Column - Order Summary */}
         <div>
-          <Card className="border-warm-200 bg-white">
+          <Card className="border-gray-200 bg-white">
             <CardHeader>
-              <CardTitle className="font-heading text-lg text-warm-900">
+              <CardTitle className="font-heading text-lg text-charcoal">
                 Order Summary
                 {isINR && currentStep === 2 && (
                   <span className="ml-2 text-xs font-normal text-purple-600">
@@ -639,41 +639,41 @@ export default function CheckoutPage() {
                   : itemTotal
                 return (
                   <div key={item.id} className="flex items-center gap-3">
-                    <div className="h-12 w-12 shrink-0 overflow-hidden rounded-md bg-gradient-to-br from-warm-100 to-warm-200">
+                    <div className="h-12 w-12 shrink-0 overflow-hidden rounded-lg bg-gray-100">
                       <div className="flex h-full items-center justify-center">
-                        <span className="text-lg text-warm-300">
+                        <span className="text-lg text-gray-300">
                           {"\uD83C\uDF81"}
                         </span>
                       </div>
                     </div>
                     <div className="flex-1 min-w-0">
-                      <p className="truncate text-sm font-medium text-warm-800">
+                      <p className="truncate text-sm font-medium text-charcoal">
                         {item.name}
                       </p>
-                      <p className="text-xs text-warm-500">
+                      <p className="text-xs text-gray-400">
                         Qty: {item.quantity}
                       </p>
                     </div>
-                    <span className="text-sm font-medium text-warm-800">
+                    <span className="text-sm font-medium text-charcoal">
                       {formatPrice(displayItemTotal, currency)}
                     </span>
                   </div>
                 )
               })}
 
-              <Separator className="bg-warm-200" />
+              <Separator className="bg-gray-200" />
 
               {/* Totals */}
               <div className="flex items-center justify-between text-sm">
-                <span className="text-warm-600">Subtotal</span>
-                <span className="font-medium text-warm-800">
+                <span className="text-gray-500">Subtotal</span>
+                <span className="font-medium text-charcoal">
                   {formatPrice(displaySubtotal, currency)}
                 </span>
               </div>
 
               <div className="flex items-center justify-between text-sm">
-                <span className="text-warm-600">Shipping</span>
-                <span className="font-medium text-warm-800">
+                <span className="text-gray-500">Shipping</span>
+                <span className="font-medium text-charcoal">
                   {displayShipping === 0 ? (
                     <span className="text-green-600">Free</span>
                   ) : (
@@ -684,20 +684,20 @@ export default function CheckoutPage() {
 
               {displayGiftWrap > 0 && (
                 <div className="flex items-center justify-between text-sm">
-                  <span className="text-warm-600">Gift wrap</span>
-                  <span className="font-medium text-warm-800">
+                  <span className="text-gray-500">Gift wrap</span>
+                  <span className="font-medium text-charcoal">
                     {formatPrice(displayGiftWrap, currency)}
                   </span>
                 </div>
               )}
 
-              <Separator className="bg-warm-200" />
+              <Separator className="bg-gray-200" />
 
               <div className="flex items-center justify-between">
-                <span className="text-base font-semibold text-warm-900">
+                <span className="text-base font-semibold text-charcoal">
                   Total
                 </span>
-                <span className="text-lg font-bold text-warm-900">
+                <span className="text-lg font-bold text-charcoal">
                   {formatPrice(displayTotal, currency)}
                 </span>
               </div>

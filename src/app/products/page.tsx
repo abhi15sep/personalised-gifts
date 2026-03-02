@@ -1,7 +1,8 @@
 import Link from "next/link"
+import Image from "next/image"
 import { SlidersHorizontal } from "lucide-react"
 
-import { CATEGORIES, OCCASIONS } from "@/lib/constants"
+import { CATEGORIES, OCCASIONS, PRODUCT_IMAGES } from "@/lib/constants"
 import { formatPrice } from "@/lib/format"
 import {
   Breadcrumb,
@@ -58,7 +59,7 @@ function FilterSidebar() {
     <div className="space-y-6">
       {/* Categories */}
       <div>
-        <h3 className="mb-3 text-sm font-semibold text-warm-800 uppercase tracking-wide">
+        <h3 className="mb-3 text-sm font-semibold text-charcoal uppercase tracking-wide">
           Category
         </h3>
         <div className="space-y-2.5">
@@ -67,20 +68,20 @@ function FilterSidebar() {
               <Checkbox id={`cat-${category.slug}`} />
               <Label
                 htmlFor={`cat-${category.slug}`}
-                className="text-sm font-normal text-warm-700 cursor-pointer"
+                className="text-sm font-normal text-gray-600 cursor-pointer"
               >
-                {category.icon} {category.name}
+                {category.name}
               </Label>
             </div>
           ))}
         </div>
       </div>
 
-      <Separator className="bg-warm-200" />
+      <Separator className="bg-gray-200" />
 
       {/* Occasions */}
       <div>
-        <h3 className="mb-3 text-sm font-semibold text-warm-800 uppercase tracking-wide">
+        <h3 className="mb-3 text-sm font-semibold text-charcoal uppercase tracking-wide">
           Occasion
         </h3>
         <div className="space-y-2.5">
@@ -89,53 +90,53 @@ function FilterSidebar() {
               <Checkbox id={`occ-${occasion.slug}`} />
               <Label
                 htmlFor={`occ-${occasion.slug}`}
-                className="text-sm font-normal text-warm-700 cursor-pointer"
+                className="text-sm font-normal text-gray-600 cursor-pointer"
               >
-                {occasion.icon} {occasion.name}
+                {occasion.name}
               </Label>
             </div>
           ))}
         </div>
       </div>
 
-      <Separator className="bg-warm-200" />
+      <Separator className="bg-gray-200" />
 
       {/* Price Range */}
       <div>
-        <h3 className="mb-3 text-sm font-semibold text-warm-800 uppercase tracking-wide">
+        <h3 className="mb-3 text-sm font-semibold text-charcoal uppercase tracking-wide">
           Price Range
         </h3>
         <div className="flex items-center gap-2">
           <Input
             type="number"
             placeholder="Min"
-            className="h-9 bg-white border-warm-200"
+            className="h-9 bg-white border-gray-200"
           />
-          <span className="text-warm-500">-</span>
+          <span className="text-gray-400">-</span>
           <Input
             type="number"
             placeholder="Max"
-            className="h-9 bg-white border-warm-200"
+            className="h-9 bg-white border-gray-200"
           />
         </div>
       </div>
 
-      <Separator className="bg-warm-200" />
+      <Separator className="bg-gray-200" />
 
       {/* Personalizable Only */}
       <div className="flex items-center justify-between">
         <Label
           htmlFor="personalizable-toggle"
-          className="text-sm font-normal text-warm-700 cursor-pointer"
+          className="text-sm font-normal text-gray-600 cursor-pointer"
         >
           Personalizable only
         </Label>
         <Switch id="personalizable-toggle" />
       </div>
 
-      <Separator className="bg-warm-200" />
+      <Separator className="bg-gray-200" />
 
-      <Button variant="outline" className="w-full border-warm-300 text-warm-700 hover:bg-warm-100">
+      <Button variant="outline" className="w-full border-gray-300 text-gray-600 hover:bg-gray-100">
         Clear All Filters
       </Button>
     </div>
@@ -161,10 +162,10 @@ export default function ProductsPage() {
       {/* Header */}
       <div className="mb-8 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h1 className="font-heading text-3xl font-bold text-warm-900">
+          <h1 className="font-heading text-3xl font-bold text-charcoal">
             All Products
           </h1>
-          <p className="mt-1 text-sm text-warm-600">
+          <p className="mt-1 text-sm text-gray-500">
             {PLACEHOLDER_PRODUCTS.length} products
           </p>
         </div>
@@ -175,7 +176,7 @@ export default function ProductsPage() {
             <SheetTrigger asChild>
               <Button
                 variant="outline"
-                className="lg:hidden border-warm-300 text-warm-700 hover:bg-warm-100"
+                className="lg:hidden border-gray-300 text-gray-600 hover:bg-gray-100"
               >
                 <SlidersHorizontal className="mr-2 h-4 w-4" />
                 Filters
@@ -183,7 +184,7 @@ export default function ProductsPage() {
             </SheetTrigger>
             <SheetContent side="left" className="w-80 overflow-y-auto">
               <SheetHeader>
-                <SheetTitle className="font-heading text-warm-900">
+                <SheetTitle className="font-heading text-charcoal">
                   Filters
                 </SheetTitle>
               </SheetHeader>
@@ -195,7 +196,7 @@ export default function ProductsPage() {
 
           {/* Sort */}
           <Select defaultValue="newest">
-            <SelectTrigger className="w-[180px] border-warm-200 bg-white">
+            <SelectTrigger className="w-[180px] border-gray-200 bg-white">
               <SelectValue placeholder="Sort by" />
             </SelectTrigger>
             <SelectContent>
@@ -218,38 +219,49 @@ export default function ProductsPage() {
         {/* Product Grid */}
         <div className="flex-1">
           <div className="grid grid-cols-2 gap-4 md:grid-cols-3 md:gap-6">
-            {PLACEHOLDER_PRODUCTS.map((product) => (
-              <Link
-                key={product.id}
-                href={`/products/${product.slug}`}
-                className="group"
-              >
-                <div className="overflow-hidden rounded-lg border border-warm-200 bg-white shadow-sm transition-shadow hover:shadow-md">
-                  {/* Placeholder Image */}
-                  <div className="relative aspect-square bg-gradient-to-br from-warm-100 via-warm-50 to-warm-200">
-                    {product.isPersonalizable && (
-                      <span className="absolute left-2 top-2 rounded-full bg-gold px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-warm-900">
-                        Personalise
-                      </span>
-                    )}
-                    <div className="flex h-full items-center justify-center">
-                      <span className="text-4xl text-warm-300">
-                        {CATEGORIES[product.id % CATEGORIES.length].icon}
-                      </span>
+            {PLACEHOLDER_PRODUCTS.map((product) => {
+              const imageUrl = PRODUCT_IMAGES[product.slug]
+              return (
+                <Link
+                  key={product.id}
+                  href={`/products/${product.slug}`}
+                  className="group"
+                >
+                  <div className="overflow-hidden rounded-xl border border-gray-200 bg-white shadow-sm transition-all hover:shadow-lg">
+                    {/* Product Image */}
+                    <div className="relative aspect-square overflow-hidden bg-gray-100">
+                      {product.isPersonalizable && (
+                        <span className="absolute left-2 top-2 z-10 rounded-full bg-rose px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-white">
+                          Personalise
+                        </span>
+                      )}
+                      {imageUrl ? (
+                        <Image
+                          src={imageUrl}
+                          alt={product.name}
+                          fill
+                          sizes="(max-width: 640px) 50vw, 33vw"
+                          className="object-cover transition-transform duration-300 group-hover:scale-105"
+                        />
+                      ) : (
+                        <div className="flex h-full items-center justify-center text-muted-foreground">
+                          No image
+                        </div>
+                      )}
+                    </div>
+                    {/* Details */}
+                    <div className="p-3">
+                      <h3 className="line-clamp-2 text-sm font-medium text-charcoal transition-colors group-hover:text-rose">
+                        {product.name}
+                      </h3>
+                      <p className="mt-1.5 text-sm font-semibold text-charcoal">
+                        {formatPrice(product.price / 100)}
+                      </p>
                     </div>
                   </div>
-                  {/* Details */}
-                  <div className="p-3">
-                    <h3 className="line-clamp-2 text-sm font-medium text-warm-800 transition-colors group-hover:text-warm-900">
-                      {product.name}
-                    </h3>
-                    <p className="mt-1.5 text-sm font-semibold text-warm-800">
-                      {formatPrice(product.price / 100)}
-                    </p>
-                  </div>
-                </div>
-              </Link>
-            ))}
+                </Link>
+              )
+            })}
           </div>
 
           {/* Pagination */}

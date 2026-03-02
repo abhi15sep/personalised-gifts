@@ -40,19 +40,19 @@ export default function CartPage() {
     return (
       <div className="mx-auto max-w-7xl px-4 py-16 sm:px-6 lg:px-8">
         <div className="flex flex-col items-center justify-center text-center">
-          <div className="flex h-24 w-24 items-center justify-center rounded-full bg-warm-100">
-            <ShoppingBag className="h-12 w-12 text-warm-400" />
+          <div className="flex h-24 w-24 items-center justify-center rounded-full bg-gray-100">
+            <ShoppingBag className="h-12 w-12 text-gray-400" />
           </div>
-          <h1 className="mt-6 font-heading text-2xl font-bold text-warm-900">
+          <h1 className="mt-6 font-heading text-2xl font-bold text-charcoal">
             Your bag is empty
           </h1>
-          <p className="mt-2 text-warm-600">
+          <p className="mt-2 text-gray-500">
             Looks like you haven&apos;t added any gifts yet. Browse our
             collection to find the perfect personalised gift.
           </p>
           <Button
             asChild
-            className="mt-6 bg-warm-700 text-warm-50 hover:bg-warm-800"
+            className="mt-6 bg-rose text-white hover:bg-rose-dark"
           >
             <Link href="/products">Browse Products</Link>
           </Button>
@@ -63,7 +63,7 @@ export default function CartPage() {
 
   return (
     <div className="mx-auto max-w-7xl px-4 py-6 sm:px-6 lg:px-8">
-      <h1 className="font-heading text-3xl font-bold text-warm-900 mb-8">
+      <h1 className="font-heading text-3xl font-bold text-charcoal mb-8">
         Shopping Bag
       </h1>
 
@@ -74,12 +74,12 @@ export default function CartPage() {
             {items.map((item) => (
               <div
                 key={item.id}
-                className="flex gap-4 rounded-lg border border-warm-200 bg-white p-4"
+                className="flex gap-4 rounded-xl border border-gray-200 bg-white p-4"
               >
                 {/* Product Image Placeholder */}
-                <div className="h-24 w-24 shrink-0 overflow-hidden rounded-md bg-gradient-to-br from-warm-100 via-warm-50 to-warm-200">
+                <div className="h-24 w-24 shrink-0 overflow-hidden rounded-lg bg-gray-100">
                   <div className="flex h-full items-center justify-center">
-                    <span className="text-3xl text-warm-300">
+                    <span className="text-3xl text-gray-300">
                       {"\uD83C\uDF81"}
                     </span>
                   </div>
@@ -90,12 +90,12 @@ export default function CartPage() {
                   <div>
                     <Link
                       href={`/products/${item.slug}`}
-                      className="text-sm font-medium text-warm-800 hover:text-warm-900 transition-colors"
+                      className="text-sm font-medium text-charcoal hover:text-rose transition-colors"
                     >
                       {item.name}
                     </Link>
                     {item.personalizationSummary && (
-                      <p className="mt-0.5 text-xs text-warm-500">
+                      <p className="mt-0.5 text-xs text-gray-400">
                         {item.personalizationSummary}
                       </p>
                     )}
@@ -103,24 +103,24 @@ export default function CartPage() {
 
                   <div className="mt-2 flex items-center justify-between">
                     {/* Quantity Selector */}
-                    <div className="flex items-center rounded-md border border-warm-200">
+                    <div className="flex items-center rounded-lg border border-gray-200">
                       <Button
                         variant="ghost"
                         size="icon"
-                        className="h-8 w-8 rounded-r-none text-warm-700 hover:bg-warm-100"
+                        className="h-8 w-8 rounded-r-none text-gray-600 hover:bg-gray-100"
                         onClick={() =>
                           updateQuantity(item.id, item.quantity - 1)
                         }
                       >
                         <Minus className="h-3 w-3" />
                       </Button>
-                      <span className="flex h-8 w-10 items-center justify-center text-sm font-medium text-warm-800 border-x border-warm-200">
+                      <span className="flex h-8 w-10 items-center justify-center text-sm font-medium text-charcoal border-x border-gray-200">
                         {item.quantity}
                       </span>
                       <Button
                         variant="ghost"
                         size="icon"
-                        className="h-8 w-8 rounded-l-none text-warm-700 hover:bg-warm-100"
+                        className="h-8 w-8 rounded-l-none text-gray-600 hover:bg-gray-100"
                         onClick={() =>
                           updateQuantity(item.id, item.quantity + 1)
                         }
@@ -131,7 +131,7 @@ export default function CartPage() {
 
                     {/* Price & Remove */}
                     <div className="flex items-center gap-3">
-                      <span className="text-sm font-semibold text-warm-800">
+                      <span className="text-sm font-semibold text-charcoal">
                         {formatPrice(
                           (item.price + item.personalizationPrice) *
                             item.quantity
@@ -140,7 +140,7 @@ export default function CartPage() {
                       <Button
                         variant="ghost"
                         size="icon"
-                        className="h-8 w-8 text-warm-500 hover:text-red-600 hover:bg-red-50"
+                        className="h-8 w-8 text-gray-400 hover:text-red-600 hover:bg-red-50"
                         onClick={() => removeItem(item.id)}
                       >
                         <Trash2 className="h-4 w-4" />
@@ -155,25 +155,25 @@ export default function CartPage() {
 
         {/* Order Summary */}
         <div>
-          <Card className="border-warm-200 bg-white">
+          <Card className="border-gray-200 bg-white">
             <CardHeader>
-              <CardTitle className="font-heading text-lg text-warm-900">
+              <CardTitle className="font-heading text-lg text-charcoal">
                 Order Summary
               </CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
               {/* Subtotal */}
               <div className="flex items-center justify-between text-sm">
-                <span className="text-warm-600">Subtotal</span>
-                <span className="font-medium text-warm-800">
+                <span className="text-gray-500">Subtotal</span>
+                <span className="font-medium text-charcoal">
                   {formatPrice(subtotal)}
                 </span>
               </div>
 
               {/* Shipping */}
               <div className="flex items-center justify-between text-sm">
-                <span className="text-warm-600">Shipping</span>
-                <span className="font-medium text-warm-800">
+                <span className="text-gray-500">Shipping</span>
+                <span className="font-medium text-charcoal">
                   {shippingCost === 0 ? (
                     <span className="text-green-600">Free</span>
                   ) : (
@@ -182,12 +182,12 @@ export default function CartPage() {
                 </span>
               </div>
               {shippingCost > 0 && (
-                <p className="text-xs text-warm-500">
+                <p className="text-xs text-gray-400">
                   Free delivery on orders over {formatPrice(FREE_SHIPPING_THRESHOLD)}
                 </p>
               )}
 
-              <Separator className="bg-warm-200" />
+              <Separator className="bg-gray-200" />
 
               {/* Gift Wrap */}
               <div className="space-y-3">
@@ -201,7 +201,7 @@ export default function CartPage() {
                   />
                   <Label
                     htmlFor="gift-wrap"
-                    className="text-sm font-normal text-warm-700 cursor-pointer"
+                    className="text-sm font-normal text-gray-600 cursor-pointer"
                   >
                     Add gift wrap (+{formatPrice(GIFT_WRAP_COST)})
                   </Label>
@@ -217,7 +217,7 @@ export default function CartPage() {
                   />
                   <Label
                     htmlFor="is-gift"
-                    className="text-sm font-normal text-warm-700 cursor-pointer"
+                    className="text-sm font-normal text-gray-600 cursor-pointer"
                   >
                     This is a gift
                   </Label>
@@ -230,7 +230,7 @@ export default function CartPage() {
                     onChange={(e) =>
                       setGiftOptions(isGift, e.target.value, giftWrap)
                     }
-                    className="border-warm-200 bg-warm-50 text-sm"
+                    className="border-gray-200 bg-[#f8f9fa] text-sm"
                     rows={3}
                   />
                 )}
@@ -238,21 +238,21 @@ export default function CartPage() {
 
               {giftWrapCost > 0 && (
                 <div className="flex items-center justify-between text-sm">
-                  <span className="text-warm-600">Gift wrap</span>
-                  <span className="font-medium text-warm-800">
+                  <span className="text-gray-500">Gift wrap</span>
+                  <span className="font-medium text-charcoal">
                     {formatPrice(giftWrapCost)}
                   </span>
                 </div>
               )}
 
-              <Separator className="bg-warm-200" />
+              <Separator className="bg-gray-200" />
 
               {/* Total */}
               <div className="flex items-center justify-between">
-                <span className="text-base font-semibold text-warm-900">
+                <span className="text-base font-semibold text-charcoal">
                   Total
                 </span>
-                <span className="text-lg font-bold text-warm-900">
+                <span className="text-lg font-bold text-charcoal">
                   {formatPrice(total)}
                 </span>
               </div>
@@ -260,7 +260,7 @@ export default function CartPage() {
               {/* Actions */}
               <Button
                 asChild
-                className="w-full h-11 bg-warm-700 text-warm-50 hover:bg-warm-800 text-base font-semibold"
+                className="w-full h-11 bg-rose text-white hover:bg-rose-dark text-base font-semibold"
               >
                 <Link href="/checkout">Proceed to Checkout</Link>
               </Button>
@@ -268,7 +268,7 @@ export default function CartPage() {
               <Button
                 asChild
                 variant="ghost"
-                className="w-full text-warm-600 hover:text-warm-800 hover:bg-warm-100"
+                className="w-full text-gray-500 hover:text-charcoal hover:bg-gray-100"
               >
                 <Link href="/products">Continue Shopping</Link>
               </Button>
