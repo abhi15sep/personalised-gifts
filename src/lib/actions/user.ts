@@ -95,13 +95,21 @@ export async function toggleWishlist(productId: number) {
     throw new Error('Unauthorized')
   }
 
-  const user = await db.user.findUnique({
+  // Find or auto-create the DB user from Clerk
+  let user = await db.user.findUnique({
     where: { clerkId: clerkUserId },
     select: { id: true },
   })
 
   if (!user) {
-    throw new Error('User not found')
+    // User exists in Clerk but not in our DB (e.g. after DB reset) — create them
+    user = await db.user.create({
+      data: {
+        clerkId: clerkUserId,
+        email: `${clerkUserId}@placeholder.local`,
+      },
+      select: { id: true },
+    })
   }
 
   const existing = await db.wishlist.findUnique({

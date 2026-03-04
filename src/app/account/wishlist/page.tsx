@@ -4,6 +4,7 @@ import { auth } from "@clerk/nextjs/server"
 import { redirect } from "next/navigation"
 import { db } from "@/lib/db"
 import { formatPrice } from "@/lib/format"
+import { PRODUCT_IMAGES } from "@/lib/constants"
 import { Card, CardContent } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import Link from "next/link"
@@ -54,14 +55,16 @@ export default async function WishlistPage() {
         </Card>
       ) : (
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-          {wishlistItems.map((item) => (
+          {wishlistItems.map((item) => {
+            const imageUrl = item.product.images[0]?.url || PRODUCT_IMAGES[item.product.slug] || null
+            return (
             <Card key={item.id} className="overflow-hidden">
               <Link href={`/products/${item.product.slug}`}>
                 <div className="relative aspect-square bg-gray-100">
-                  {item.product.images[0] ? (
+                  {imageUrl ? (
                     <Image
-                      src={item.product.images[0].url}
-                      alt={item.product.images[0].altText || item.product.name}
+                      src={imageUrl}
+                      alt={item.product.images[0]?.altText || item.product.name}
                       fill
                       className="object-cover"
                     />
@@ -86,7 +89,8 @@ export default async function WishlistPage() {
                 </p>
               </CardContent>
             </Card>
-          ))}
+            )
+          })}
         </div>
       )}
     </div>
