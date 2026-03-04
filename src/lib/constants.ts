@@ -11,21 +11,38 @@ export const FREE_SHIPPING_THRESHOLD_INR = Math.round(FREE_SHIPPING_THRESHOLD * 
 export const GIFT_WRAP_COST_INR = Math.round(GIFT_WRAP_COST * GBP_TO_INR_RATE)
 
 export const PRODUCT_IMAGES: Record<string, string> = {
+  // Mugs & Drinkware
   'personalised-name-mug': 'https://images.unsplash.com/photo-1514228742587-6b1558fcca3d?w=600&h=600&fit=crop',
+  'engraved-whisky-glass-set': 'https://images.unsplash.com/photo-1570598912132-0ba1dc952b7d?w=600&h=600&fit=crop',
+  'custom-pet-portrait-mug': 'https://images.unsplash.com/photo-1615486511484-92e172cc4fe0?w=600&h=600&fit=crop',
+  'personalised-enamel-camping-mug': 'https://images.unsplash.com/photo-1530968033775-2c92736b131e?w=600&h=600&fit=crop',
+  // Jewellery
   'engraved-heart-necklace': 'https://images.unsplash.com/photo-1515562141589-67f0d569b6fc?w=600&h=600&fit=crop',
+  'custom-coordinates-bracelet': 'https://images.unsplash.com/photo-1573408301185-9146fe634ad0?w=600&h=600&fit=crop',
+  'initial-signet-ring': 'https://images.unsplash.com/photo-1605100804763-247f67b3557e?w=600&h=600&fit=crop',
+  // Home Decor
   'custom-photo-cushion': 'https://images.unsplash.com/photo-1629949009765-40fc74c9ec21?w=600&h=600&fit=crop',
-  'custom-star-map-print': 'https://images.unsplash.com/photo-1579783902614-a3fb3927b6a5?w=600&h=600&fit=crop',
-  'custom-family-portrait': 'https://images.unsplash.com/photo-1513364776144-60967b0f800f?w=600&h=600&fit=crop',
-  'engraved-wooden-photo-frame': 'https://images.unsplash.com/photo-1524592094714-0f0654e20314?w=600&h=600&fit=crop',
-  'personalised-baby-blanket': 'https://images.unsplash.com/photo-1519689680058-324335c77eba?w=600&h=600&fit=crop',
-  'recipe-book': 'https://images.unsplash.com/photo-1544947950-fa07a98d237f?w=600&h=600&fit=crop',
-  'custom-coordinates-necklace': 'https://images.unsplash.com/photo-1573408301185-9146fe634ad0?w=600&h=600&fit=crop',
-  'hand-stamped-silver-bracelet': 'https://images.unsplash.com/photo-1531346878377-a5be20888e57?w=600&h=600&fit=crop',
-  'wedding-print': 'https://images.unsplash.com/photo-1606800052052-a08af7148866?w=600&h=600&fit=crop',
-  'whisky-glass-set': 'https://images.unsplash.com/photo-1570598912132-0ba1dc952b7d?w=600&h=600&fit=crop',
+  'personalised-star-map-print': 'https://images.unsplash.com/photo-1579783902614-a3fb3927b6a5?w=600&h=600&fit=crop',
+  'personalised-map-print': 'https://images.unsplash.com/photo-1524661135-423995f22d0b?w=600&h=600&fit=crop',
   'personalised-chopping-board': 'https://images.unsplash.com/photo-1495360010541-f48722b34f7d?w=600&h=600&fit=crop',
-  'engraved-leather-keyring': 'https://images.unsplash.com/photo-1524661135-423995f22d0b?w=600&h=600&fit=crop',
-  'rose-gold-pen': 'https://images.unsplash.com/photo-1585336261022-680e295ce3fe?w=600&h=600&fit=crop',
+  // Photo Gifts
+  'custom-family-portrait': 'https://images.unsplash.com/photo-1513364776144-60967b0f800f?w=600&h=600&fit=crop',
+  'photo-memory-book': 'https://images.unsplash.com/photo-1544947950-fa07a98d237f?w=600&h=600&fit=crop',
+  'personalised-photo-canvas': 'https://images.unsplash.com/photo-1513519245088-0e12902e35ca?w=600&h=600&fit=crop',
+  // Clothing & Accessories
+  'engraved-wooden-watch': 'https://images.unsplash.com/photo-1524592094714-0f0654e20314?w=600&h=600&fit=crop',
+  'engraved-leather-keyring': 'https://images.unsplash.com/photo-1622560480605-d83c853bc5c3?w=600&h=600&fit=crop',
+  'personalised-silk-scarf': 'https://images.unsplash.com/photo-1601924921557-45e6dea0a157?w=600&h=600&fit=crop',
+  // Stationery
+  'personalised-recipe-book': 'https://images.unsplash.com/photo-1544947950-fa07a98d237f?w=600&h=600&fit=crop',
+  'name-rose-gold-pen': 'https://images.unsplash.com/photo-1585336261022-680e295ce3fe?w=600&h=600&fit=crop',
+  'personalised-leather-journal': 'https://images.unsplash.com/photo-1531346878377-a5be20888e57?w=600&h=600&fit=crop',
+  // Baby & Kids
+  'baby-name-blanket': 'https://images.unsplash.com/photo-1519689680058-324335c77eba?w=600&h=600&fit=crop',
+  'personalised-childrens-story-book': 'https://images.unsplash.com/photo-1512820790803-83ca734da794?w=600&h=600&fit=crop',
+  // Wedding
+  'personalised-wedding-print': 'https://images.unsplash.com/photo-1606800052052-a08af7148866?w=600&h=600&fit=crop',
+  'mr-mrs-ring-dish': 'https://images.unsplash.com/photo-1615655406736-b37c4fabf923?w=600&h=600&fit=crop',
 }
 
 export const HERO_IMAGE = 'https://images.unsplash.com/photo-1549465220-1a8b9238f939?w=1600&h=600&fit=crop'
