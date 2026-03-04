@@ -40,7 +40,7 @@ npx prisma db seed
 npm run dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000). The seed creates 8 categories, 10 occasions, and 15 products with personalisation options.
+Open [http://localhost:3000](http://localhost:3000). The seed creates 8 categories, 10 occasions, and 25 products with real Unsplash images, variants, and personalisation options.
 
 ## Project Structure
 
@@ -78,7 +78,7 @@ src/
 └── middleware.ts           # Auth middleware
 prisma/
 ├── schema.prisma           # Database schema (15 tables)
-└── seed.ts                 # Seed data (15 products)
+└── seed.ts                 # Seed data (25 products)
 ```
 
 ---
@@ -359,7 +359,7 @@ npx prisma generate
 # Run database migrations (creates all tables)
 npx prisma migrate deploy
 
-# Seed the database with sample data (15 products, categories, occasions)
+# Seed the database with sample data (25 products, categories, occasions)
 npx prisma db seed
 ```
 
@@ -655,7 +655,7 @@ npx prisma generate
 # Step 3: Create all database tables from schema
 npx prisma db push
 
-# Step 4: Seed the database with sample data (15 products, categories, occasions)
+# Step 4: Seed the database with sample data (25 products, categories, occasions)
 npx prisma db seed
 
 # Step 5: Build the app
@@ -762,9 +762,41 @@ pm2 restart personalised-gifts
 
 ---
 
+## VPS: Deploying Code + Seed Data Changes (Re-seed)
+
+When you've updated the seed file (e.g., new products, better images, more categories) and want to refresh the sample data:
+
+```bash
+cd /var/www/personalised-gift
+
+# 1. Pull latest code
+git pull origin main
+
+# 2. Install any new dependencies
+npm install
+
+# 3. Wipe and re-seed the database with updated products
+npx prisma db push --force-reset
+npx prisma db seed
+
+# 4. Build the app
+npm run build
+
+# 5. Copy static assets
+cp -r .next/static .next/standalone/.next/static
+cp -r public .next/standalone/public
+
+# 6. Restart
+pm2 restart personalised-gifts
+```
+
+> **Warning:** `--force-reset` deletes ALL data (orders, users, products) and re-creates tables. Only use this when you want to start fresh with new seed data. If you have real customer orders, use the "Code Changes" workflow instead and add new products through the admin panel.
+
+---
+
 ## VPS: Resetting the Database (Start Fresh)
 
-If you need to wipe everything and start over:
+If you need to wipe everything and start over (same as above, without pulling code):
 
 ```bash
 cd /var/www/personalised-gift

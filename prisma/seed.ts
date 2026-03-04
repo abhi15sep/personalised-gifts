@@ -120,8 +120,8 @@ async function main() {
         { optionKey: 'colour', label: 'Text Colour', optionType: PersonalizationType.COLOUR, isRequired: false, priceModifier: 0, constraints: {}, sortOrder: 3 },
       ],
       variants: [
-        { name: 'Standard (330ml)', sku: 'MUG-STD', price: 14.99, stock: 50 },
-        { name: 'Large (450ml)', sku: 'MUG-LRG', price: 17.99, stock: 30 },
+        { name: 'Standard (330ml)', sku: 'MUG-STD', price: 14.99, stockQty: 50 },
+        { name: 'Large (450ml)', sku: 'MUG-LRG', price: 17.99, stockQty: 30 },
       ],
     },
     {
@@ -208,9 +208,9 @@ async function main() {
         { optionKey: 'font', label: 'Engraving Font', optionType: PersonalizationType.FONT, isRequired: false, priceModifier: 0, constraints: {}, sortOrder: 2 },
       ],
       variants: [
-        { name: 'Silver', sku: 'HN-SLV', price: 32.99, stock: 25 },
-        { name: 'Rose Gold', sku: 'HN-RG', price: 37.99, stock: 20 },
-        { name: 'Gold', sku: 'HN-GLD', price: 39.99, stock: 15 },
+        { name: 'Silver', sku: 'HN-SLV', price: 32.99, stockQty: 25 },
+        { name: 'Rose Gold', sku: 'HN-RG', price: 37.99, stockQty: 20 },
+        { name: 'Gold', sku: 'HN-GLD', price: 39.99, stockQty: 15 },
       ],
     },
     {
@@ -252,9 +252,9 @@ async function main() {
         { optionKey: 'font', label: 'Engraving Style', optionType: PersonalizationType.FONT, isRequired: false, priceModifier: 0, constraints: {}, sortOrder: 2 },
       ],
       variants: [
-        { name: 'Small (L-O)', sku: 'SR-SM', price: 44.99, stock: 15 },
-        { name: 'Medium (P-S)', sku: 'SR-MD', price: 44.99, stock: 15 },
-        { name: 'Large (T-W)', sku: 'SR-LG', price: 44.99, stock: 15 },
+        { name: 'Small (L-O)', sku: 'SR-SM', price: 44.99, stockQty: 15 },
+        { name: 'Medium (P-S)', sku: 'SR-MD', price: 44.99, stockQty: 15 },
+        { name: 'Large (T-W)', sku: 'SR-LG', price: 44.99, stockQty: 15 },
       ],
     },
 
@@ -300,9 +300,9 @@ async function main() {
         { optionKey: 'message', label: 'Custom Message', optionType: PersonalizationType.TEXT, isRequired: false, priceModifier: 0, constraints: { maxLength: 40 }, sortOrder: 3 },
       ],
       variants: [
-        { name: 'A4 Print', sku: 'SM-A4', price: 24.99, stock: 40 },
-        { name: 'A3 Print', sku: 'SM-A3', price: 34.99, stock: 30 },
-        { name: 'A3 Framed', sku: 'SM-A3F', price: 54.99, stock: 15 },
+        { name: 'A4 Print', sku: 'SM-A4', price: 24.99, stockQty: 40 },
+        { name: 'A3 Print', sku: 'SM-A3', price: 34.99, stockQty: 30 },
+        { name: 'A3 Framed', sku: 'SM-A3F', price: 54.99, stockQty: 15 },
       ],
     },
     {
@@ -368,9 +368,9 @@ async function main() {
         { optionKey: 'style', label: 'Art Style', optionType: PersonalizationType.DROPDOWN, isRequired: false, priceModifier: 0, constraints: { options: ['Modern Minimalist', 'Watercolour', 'Cartoon', 'Line Art'] }, sortOrder: 3 },
       ],
       variants: [
-        { name: 'Digital Only', sku: 'FP-DIG', price: 39.99, stock: 999 },
-        { name: 'A4 Print', sku: 'FP-A4', price: 49.99, stock: 30 },
-        { name: 'A3 Framed', sku: 'FP-A3F', price: 69.99, stock: 15 },
+        { name: 'Digital Only', sku: 'FP-DIG', price: 39.99, stockQty: 999 },
+        { name: 'A4 Print', sku: 'FP-A4', price: 49.99, stockQty: 30 },
+        { name: 'A3 Framed', sku: 'FP-A3F', price: 69.99, stockQty: 15 },
       ],
     },
     {
@@ -411,9 +411,9 @@ async function main() {
         { optionKey: 'photo', label: 'Upload Photo', optionType: PersonalizationType.IMAGE, isRequired: true, priceModifier: 0, constraints: { maxFileSize: '10MB', acceptedTypes: ['image/jpeg', 'image/png'] }, sortOrder: 1 },
       ],
       variants: [
-        { name: '20x20cm', sku: 'CV-20', price: 29.99, stock: 30 },
-        { name: '30x30cm', sku: 'CV-30', price: 39.99, stock: 25 },
-        { name: '50x40cm', sku: 'CV-50', price: 54.99, stock: 20 },
+        { name: '20x20cm', sku: 'CV-20', price: 29.99, stockQty: 30 },
+        { name: '30x30cm', sku: 'CV-30', price: 39.99, stockQty: 25 },
+        { name: '50x40cm', sku: 'CV-50', price: 54.99, stockQty: 20 },
       ],
     },
 
@@ -607,9 +607,9 @@ async function main() {
         { optionKey: 'venue', label: 'Venue', optionType: PersonalizationType.TEXT, isRequired: false, priceModifier: 0, constraints: { maxLength: 30 }, sortOrder: 3 },
       ],
       variants: [
-        { name: 'A4 Print', sku: 'WP-A4', price: 24.99, stock: 30 },
-        { name: 'A3 Print', sku: 'WP-A3', price: 34.99, stock: 20 },
-        { name: 'A3 Framed', sku: 'WP-A3F', price: 49.99, stock: 15 },
+        { name: 'A4 Print', sku: 'WP-A4', price: 24.99, stockQty: 30 },
+        { name: 'A3 Print', sku: 'WP-A3', price: 34.99, stockQty: 20 },
+        { name: 'A3 Framed', sku: 'WP-A3F', price: 49.99, stockQty: 15 },
       ],
     },
     {
@@ -682,7 +682,7 @@ async function main() {
                     name: v.name,
                     sku: v.sku,
                     price: v.price,
-                    stock: v.stock,
+                    stockQty: v.stockQty,
                   })),
                 },
               },
