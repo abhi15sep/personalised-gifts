@@ -5,23 +5,29 @@ import { Prisma } from '@prisma/client'
 
 interface GetProductsParams {
   categoryId?: number
+  categorySlug?: string
   occasionSlug?: string
   search?: string
   status?: string
   page?: number
   limit?: number
   sortBy?: 'newest' | 'price-asc' | 'price-desc' | 'name' | 'popular'
+  priceMin?: number
+  priceMax?: number
 }
 
 export async function getProducts(params: GetProductsParams = {}) {
   const {
     categoryId,
+    categorySlug,
     occasionSlug,
     search,
     status = 'ACTIVE',
     page = 1,
     limit = 12,
     sortBy = 'newest',
+    priceMin,
+    priceMax,
   } = params
 
   const where: Prisma.ProductWhereInput = {
@@ -30,6 +36,20 @@ export async function getProducts(params: GetProductsParams = {}) {
 
   if (categoryId) {
     where.categoryId = categoryId
+  }
+
+  if (categorySlug) {
+    where.category = { slug: categorySlug }
+  }
+
+  if (priceMin !== undefined || priceMax !== undefined) {
+    where.basePrice = {}
+    if (priceMin !== undefined) {
+      where.basePrice.gte = priceMin
+    }
+    if (priceMax !== undefined) {
+      where.basePrice.lte = priceMax
+    }
   }
 
   if (occasionSlug) {
@@ -159,12 +179,13 @@ export async function getProductsByOccasion(occasionSlug: string) {
 }
 
 export async function searchProducts(query: string) {
+  // Use contains instead of fulltext search for broader compatibility
   const products = await db.product.findMany({
     where: {
       status: 'ACTIVE',
       OR: [
-        { name: { search: query } },
-        { description: { search: query } },
+        { name: { contains: query } },
+        { description: { contains: query } },
       ],
     },
     include: {
@@ -173,15 +194,23 @@ export async function searchProducts(query: string) {
       },
       category: true,
     },
-    orderBy: {
-      _relevance: {
-        fields: ['name', 'description'],
-        search: query,
-        sort: 'desc',
-      },
-    },
+    orderBy: { createdAt: 'desc' },
     take: 20,
   })
 
   return products
+}
+
+export async function getCategories() {
+  const categories = await db.category.findMany({
+    orderBy: { name: 'asc' },
+  })
+  return categories
+}
+
+export async function getOccasions() {
+  const occasions = await db.occasion.findMany({
+    orderBy: { name: 'asc' },
+  })
+  return occasions
 }

@@ -2,42 +2,49 @@ import Link from "next/link"
 import Image from "next/image"
 import { notFound } from "next/navigation"
 import { ChevronRight } from "lucide-react"
-import { Card, CardContent } from "@/components/ui/card"
-import { OCCASIONS, PRODUCT_IMAGES, OCCASION_IMAGES } from "@/lib/constants"
+import { Metadata } from "next"
 
-const PLACEHOLDER_PRODUCTS = [
-  { name: "Personalised Name Mug", price: "£14.99", slug: "personalised-name-mug" },
-  { name: "Engraved Heart Necklace", price: "£29.99", slug: "engraved-heart-necklace" },
-  { name: "Custom Photo Cushion", price: "£24.99", slug: "custom-photo-cushion" },
-  { name: "Star Map Print", price: "£34.99", slug: "custom-star-map-print" },
-  { name: "Personalised Baby Blanket", price: "£32.99", slug: "personalised-baby-blanket" },
-  { name: "Custom Family Portrait", price: "£59.99", slug: "custom-family-portrait" },
-]
+import { getProductsByOccasion, getOccasions } from "@/lib/actions/products"
+import { OCCASION_IMAGES } from "@/lib/constants"
+import { ProductCard } from "@/components/product/product-card"
 
-export async function generateStaticParams() {
-  return OCCASIONS.map((occasion) => ({
-    slug: occasion.slug,
-  }))
+interface PageProps {
+  params: Promise<{ slug: string }>
 }
 
-export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }) {
+export async function generateStaticParams() {
+  try {
+    const occasions = await getOccasions()
+    return occasions.map((occasion) => ({
+      slug: occasion.slug,
+    }))
+  } catch {
+    // DB unavailable at build time - return empty for on-demand generation
+    return []
+  }
+}
+
+export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
   const { slug } = await params
-  const occasion = OCCASIONS.find((o) => o.slug === slug)
+  const occasions = await getOccasions()
+  const occasion = occasions.find((o) => o.slug === slug)
   if (!occasion) return {}
   return {
-    title: `${occasion.name} Gifts`,
+    title: `${occasion.name} Gifts | Personalised Gifts`,
     description: `Discover unique personalised gifts for ${occasion.name}. Handcrafted with love and delivered to your door.`,
   }
 }
 
-export default async function OccasionPage({ params }: { params: Promise<{ slug: string }> }) {
+export default async function OccasionPage({ params }: PageProps) {
   const { slug } = await params
-  const occasion = OCCASIONS.find((o) => o.slug === slug)
+  const occasions = await getOccasions()
+  const occasion = occasions.find((o) => o.slug === slug)
 
   if (!occasion) {
     notFound()
   }
 
+  const products = await getProductsByOccasion(slug)
   const occasionImage = OCCASION_IMAGES[occasion.slug]
 
   return (
@@ -69,7 +76,7 @@ export default async function OccasionPage({ params }: { params: Promise<{ slug:
                 {occasion.name} Gifts
               </h1>
               <p className="mt-1 text-white/80">
-                Find the perfect personalised gift for {occasion.name.toLowerCase()}
+                {products.length} {products.length === 1 ? "gift" : "gifts"} for {occasion.name.toLowerCase()}
               </p>
             </div>
           </div>
@@ -87,36 +94,31 @@ export default async function OccasionPage({ params }: { params: Promise<{ slug:
         )}
 
         {/* Product Grid */}
-        <div className="grid grid-cols-2 gap-4 md:grid-cols-3 lg:grid-cols-4 md:gap-6">
-          {PLACEHOLDER_PRODUCTS.map((product) => {
-            const imageUrl = PRODUCT_IMAGES[product.slug]
-            return (
-              <Link key={product.name} href={`/products/${product.slug}`} className="group">
-                <Card className="overflow-hidden border-gray-200 transition-all hover:shadow-lg">
-                  <div className="relative aspect-square overflow-hidden bg-gray-100">
-                    {imageUrl ? (
-                      <Image
-                        src={imageUrl}
-                        alt={product.name}
-                        fill
-                        sizes="(max-width: 640px) 50vw, 25vw"
-                        className="object-cover transition-transform duration-300 group-hover:scale-105"
-                      />
-                    ) : (
-                      <div className="flex h-full items-center justify-center text-muted-foreground">
-                        No image
-                      </div>
-                    )}
-                  </div>
-                  <CardContent className="p-4">
-                    <h3 className="text-sm font-medium text-charcoal group-hover:text-rose transition-colors">{product.name}</h3>
-                    <p className="mt-1 text-sm font-semibold text-rose">{product.price}</p>
-                  </CardContent>
-                </Card>
-              </Link>
-            )
-          })}
-        </div>
+        {products.length === 0 ? (
+          <p className="text-center text-muted-foreground py-12">
+            No products found for this occasion yet.
+          </p>
+        ) : (
+          <div className="grid grid-cols-2 gap-4 md:grid-cols-3 lg:grid-cols-4 md:gap-6">
+            {products.map((product) => (
+              <ProductCard
+                key={product.id}
+                product={{
+                  id: product.id,
+                  name: product.name,
+                  slug: product.slug,
+                  basePrice: product.basePrice as unknown as number,
+                  compareAtPrice: product.compareAtPrice as unknown as number | null,
+                  images: product.images.map((img) => ({
+                    url: img.url,
+                    altText: img.altText,
+                  })),
+                  isPersonalizable: product.isPersonalizable,
+                }}
+              />
+            ))}
+          </div>
+        )}
       </div>
     </div>
   )

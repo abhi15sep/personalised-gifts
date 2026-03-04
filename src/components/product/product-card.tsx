@@ -6,13 +6,14 @@ import Image from "next/image"
 import { Heart } from "lucide-react"
 
 import { cn } from "@/lib/utils"
+import { PRODUCT_IMAGES } from "@/lib/constants"
 import { Card, CardContent } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 
 interface ProductImage {
   url: string
-  altText: string
+  altText: string | null
 }
 
 interface Product {
@@ -20,7 +21,7 @@ interface Product {
   name: string
   slug: string
   basePrice: number
-  compareAtPrice?: number
+  compareAtPrice?: number | null
   images: ProductImage[]
   isPersonalizable: boolean
 }
@@ -46,7 +47,9 @@ export function ProductCard({ product }: ProductCardProps) {
       )
     : 0
 
-  const primaryImage = product.images[0]
+  const dbImage = product.images[0]
+  const fallbackUrl = PRODUCT_IMAGES[product.slug]
+  const primaryImage = dbImage || (fallbackUrl ? { url: fallbackUrl, altText: product.name } : null)
 
   return (
     <Card className="group relative overflow-hidden border-gray-200 p-0 shadow-sm transition-all hover:shadow-lg">

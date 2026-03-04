@@ -1,6 +1,9 @@
 import Link from "next/link"
 import Image from "next/image"
+import { notFound } from "next/navigation"
+import { Metadata } from "next"
 
+import { getProductBySlug, getProducts } from "@/lib/actions/products"
 import { formatPrice, getDeliveryEstimate } from "@/lib/format"
 import { PRODUCT_IMAGES } from "@/lib/constants"
 import {
@@ -20,34 +23,7 @@ import {
   TabsTrigger,
 } from "@/components/ui/tabs"
 import { AddToCart } from "@/components/product/add-to-cart"
-
-// Placeholder product data
-const PLACEHOLDER_PRODUCT = {
-  id: 1,
-  name: "Personalised Name Mug",
-  slug: "personalised-name-mug",
-  basePrice: 1299,
-  compareAtPrice: 1599,
-  rating: 4,
-  reviewCount: 47,
-  isPersonalizable: true,
-  productionDays: 3,
-  description:
-    "A beautiful ceramic mug personalised with the name of your choice. Each mug is individually crafted using premium materials and printed with care. The perfect gift for birthdays, Christmas, or just because. Dishwasher and microwave safe.",
-  deliveryInfo:
-    "Standard delivery: 3-5 working days. Express delivery available at checkout for next-day dispatch. All items are carefully packaged to ensure safe arrival. Free delivery on orders over \u00a340.",
-  variants: [
-    { label: "Standard (330ml)", value: "standard" },
-    { label: "Large (450ml)", value: "large" },
-  ],
-}
-
-const SIMILAR_PRODUCTS = [
-  { id: 1, name: "Engraved Wooden Photo Frame", slug: "engraved-wooden-photo-frame", price: 2499 },
-  { id: 2, name: "Custom Star Map Print", slug: "custom-star-map-print", price: 3499 },
-  { id: 3, name: "Hand-Stamped Silver Bracelet", slug: "hand-stamped-silver-bracelet", price: 4599 },
-  { id: 4, name: "Personalised Chopping Board", slug: "personalised-chopping-board", price: 2999 },
-]
+import { ProductCard } from "@/components/product/product-card"
 
 function StarRating({ rating, count }: { rating: number; count: number }) {
   return (
@@ -59,20 +35,59 @@ function StarRating({ rating, count }: { rating: number; count: number }) {
           </span>
         ))}
       </div>
-      <span className="text-sm text-gray-500">({count} reviews)</span>
+      <span className="text-sm text-gray-500">({count} {count === 1 ? "review" : "reviews"})</span>
     </div>
   )
 }
 
-export default async function ProductDetailPage({
-  params,
-}: {
+interface PageProps {
   params: Promise<{ slug: string }>
-}) {
+}
+
+export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
   const { slug } = await params
-  const product = PLACEHOLDER_PRODUCT
-  const deliveryEstimate = getDeliveryEstimate(product.productionDays)
-  const productImage = PRODUCT_IMAGES[product.slug]
+  const product = await getProductBySlug(slug)
+  if (!product) return {}
+  return {
+    title: `${product.name} | Personalised Gifts`,
+    description: product.description?.slice(0, 160) || `Buy ${product.name} - unique personalised gift.`,
+  }
+}
+
+export default async function ProductDetailPage({ params }: PageProps) {
+  const { slug } = await params
+  const product = await getProductBySlug(slug)
+
+  if (!product) {
+    notFound()
+  }
+
+  const deliveryEstimate = getDeliveryEstimate(product.productionDays ?? 3)
+
+  // Get product image - prefer DB images, fall back to constants
+  const dbImages = product.images
+  const fallbackUrl = PRODUCT_IMAGES[product.slug]
+  const hasImages = dbImages.length > 0 || fallbackUrl
+  const primaryImageUrl = dbImages[0]?.url || fallbackUrl || null
+
+  // Compute average rating from real reviews
+  const reviewCount = product.reviews.length
+  const avgRating = reviewCount > 0
+    ? Math.round(product.reviews.reduce((sum, r) => sum + r.rating, 0) / reviewCount)
+    : 0
+
+  // Build variants for AddToCart
+  const variants = product.variants.map((v) => ({
+    label: v.name,
+    value: v.sku || String(v.id),
+  }))
+
+  // Fetch related products from same category
+  const { products: relatedProducts } = await getProducts({
+    categorySlug: product.category?.slug,
+    limit: 4,
+  })
+  const similarProducts = relatedProducts.filter((p) => p.id !== product.id).slice(0, 4)
 
   return (
     <div className="mx-auto max-w-7xl px-4 py-6 sm:px-6 lg:px-8">
@@ -86,6 +101,16 @@ export default async function ProductDetailPage({
           <BreadcrumbItem>
             <BreadcrumbLink href="/products">Products</BreadcrumbLink>
           </BreadcrumbItem>
+          {product.category && (
+            <>
+              <BreadcrumbSeparator />
+              <BreadcrumbItem>
+                <BreadcrumbLink href={`/category/${product.category.slug}`}>
+                  {product.category.name}
+                </BreadcrumbLink>
+              </BreadcrumbItem>
+            </>
+          )}
           <BreadcrumbSeparator />
           <BreadcrumbItem>
             <BreadcrumbPage>{product.name}</BreadcrumbPage>
@@ -104,10 +129,10 @@ export default async function ProductDetailPage({
                 Personalise
               </Badge>
             )}
-            {productImage ? (
+            {primaryImageUrl ? (
               <Image
-                src={productImage}
-                alt={product.name}
+                src={primaryImageUrl}
+                alt={dbImages[0]?.altText || product.name}
                 fill
                 priority
                 sizes="(max-width: 1024px) 100vw, 50vw"
@@ -121,32 +146,28 @@ export default async function ProductDetailPage({
           </div>
 
           {/* Thumbnail Strip */}
-          <div className="mt-4 flex gap-3">
-            {[0, 1, 2, 3].map((i) => (
-              <button
-                key={i}
-                className={`relative aspect-square w-20 overflow-hidden rounded-lg border-2 transition-colors ${
-                  i === 0
-                    ? "border-rose"
-                    : "border-gray-200 hover:border-gray-400"
-                } bg-gray-100`}
-              >
-                {productImage ? (
+          {dbImages.length > 1 && (
+            <div className="mt-4 flex gap-3">
+              {dbImages.map((img, i) => (
+                <div
+                  key={img.id}
+                  className={`relative aspect-square w-20 overflow-hidden rounded-lg border-2 transition-colors ${
+                    i === 0
+                      ? "border-rose"
+                      : "border-gray-200 hover:border-gray-400"
+                  } bg-gray-100`}
+                >
                   <Image
-                    src={productImage}
-                    alt={`${product.name} view ${i + 1}`}
+                    src={img.url}
+                    alt={img.altText || `${product.name} view ${i + 1}`}
                     fill
                     sizes="80px"
                     className="object-cover"
                   />
-                ) : (
-                  <div className="flex h-full items-center justify-center text-muted-foreground text-xs">
-                    {i + 1}
-                  </div>
-                )}
-              </button>
-            ))}
-          </div>
+                </div>
+              ))}
+            </div>
+          )}
         </div>
 
         {/* Right: Details */}
@@ -156,18 +177,20 @@ export default async function ProductDetailPage({
           </h1>
 
           {/* Rating */}
-          <div className="mt-2">
-            <StarRating rating={product.rating} count={product.reviewCount} />
-          </div>
+          {reviewCount > 0 && (
+            <div className="mt-2">
+              <StarRating rating={avgRating} count={reviewCount} />
+            </div>
+          )}
 
           {/* Price */}
           <div className="mt-4 flex items-baseline gap-3">
             <span className="text-2xl font-bold text-charcoal">
-              From {formatPrice(product.basePrice / 100)}
+              From {formatPrice(Number(product.basePrice) / 100)}
             </span>
-            {product.compareAtPrice && product.compareAtPrice > product.basePrice && (
+            {product.compareAtPrice && Number(product.compareAtPrice) > Number(product.basePrice) && (
               <span className="text-lg text-gray-400 line-through">
-                {formatPrice(product.compareAtPrice / 100)}
+                {formatPrice(Number(product.compareAtPrice) / 100)}
               </span>
             )}
           </div>
@@ -179,10 +202,19 @@ export default async function ProductDetailPage({
             productId={product.id}
             name={product.name}
             slug={product.slug}
-            price={product.basePrice}
+            price={Number(product.basePrice)}
             isPersonalizable={product.isPersonalizable}
-            variants={product.variants}
-            imageUrl={productImage}
+            variants={variants}
+            imageUrl={primaryImageUrl || undefined}
+            personalizationOptions={product.personalizationOptions.map((opt) => ({
+              id: opt.id,
+              optionKey: opt.optionKey,
+              label: opt.label,
+              optionType: opt.optionType,
+              isRequired: opt.isRequired,
+              priceModifier: Number(opt.priceModifier),
+              constraints: opt.constraints as Record<string, unknown> | null,
+            }))}
           />
 
           {/* Delivery Estimate */}
@@ -204,95 +236,85 @@ export default async function ProductDetailPage({
               Delivery Info
             </TabsTrigger>
             <TabsTrigger value="reviews" className="text-gray-600 data-[state=active]:text-charcoal">
-              Reviews
+              Reviews ({reviewCount})
             </TabsTrigger>
           </TabsList>
 
           <TabsContent value="description" className="mt-4">
             <div className="prose max-w-none text-gray-600">
               <p>{product.description}</p>
-              <ul className="mt-4 space-y-1 text-sm">
-                <li>Premium ceramic material</li>
-                <li>Dishwasher and microwave safe</li>
-                <li>Individually hand-finished</li>
-                <li>Comes gift-boxed</li>
-              </ul>
             </div>
           </TabsContent>
 
           <TabsContent value="delivery" className="mt-4">
             <div className="text-gray-600">
-              <p>{product.deliveryInfo}</p>
+              <p>
+                Standard delivery: 3-5 working days. Express delivery available at checkout for next-day dispatch. All items are carefully packaged to ensure safe arrival. Free delivery on orders over £40.
+              </p>
             </div>
           </TabsContent>
 
           <TabsContent value="reviews" className="mt-4">
             <div className="text-gray-600">
-              <div className="mb-4">
-                <StarRating rating={product.rating} count={product.reviewCount} />
-              </div>
-              {[
-                { author: "Sarah M.", rating: 5, text: "Absolutely beautiful! The quality is amazing and it arrived so quickly. My mum loved it!" },
-                { author: "James R.", rating: 4, text: "Great gift, well made. The personalisation looked fantastic. Would buy again." },
-                { author: "Emma T.", rating: 4, text: "Lovely quality and the packaging was gorgeous. Perfect birthday present." },
-              ].map((review, i) => (
-                <div key={i} className="border-b border-gray-200 py-4 last:border-0">
-                  <div className="flex items-center gap-2">
-                    <span className="text-sm font-semibold text-charcoal">{review.author}</span>
-                    <div className="flex text-gold text-sm">
-                      {[1, 2, 3, 4, 5].map((star) => (
-                        <span key={star}>{star <= review.rating ? "\u2605" : "\u2606"}</span>
-                      ))}
-                    </div>
+              {reviewCount > 0 ? (
+                <>
+                  <div className="mb-4">
+                    <StarRating rating={avgRating} count={reviewCount} />
                   </div>
-                  <p className="mt-1 text-sm text-gray-500">{review.text}</p>
-                </div>
-              ))}
+                  {product.reviews.map((review) => (
+                    <div key={review.id} className="border-b border-gray-200 py-4 last:border-0">
+                      <div className="flex items-center gap-2">
+                        <span className="text-sm font-semibold text-charcoal">
+                          {review.user?.name || "Anonymous"}
+                        </span>
+                        <div className="flex text-gold text-sm">
+                          {[1, 2, 3, 4, 5].map((star) => (
+                            <span key={star}>{star <= review.rating ? "\u2605" : "\u2606"}</span>
+                          ))}
+                        </div>
+                      </div>
+                      {review.title && (
+                        <p className="mt-1 text-sm font-medium text-charcoal">{review.title}</p>
+                      )}
+                      <p className="mt-1 text-sm text-gray-500">{review.body}</p>
+                    </div>
+                  ))}
+                </>
+              ) : (
+                <p className="text-sm text-gray-500">No reviews yet. Be the first to review this product!</p>
+              )}
             </div>
           </TabsContent>
         </Tabs>
       </div>
 
       {/* You May Also Like */}
-      <div className="mt-16">
-        <h2 className="font-heading text-2xl font-bold text-charcoal mb-6">
-          You May Also Like
-        </h2>
-        <div className="grid grid-cols-2 gap-4 md:grid-cols-4 md:gap-6">
-          {SIMILAR_PRODUCTS.map((item) => {
-            const imgUrl = PRODUCT_IMAGES[item.slug]
-            return (
-              <Link key={item.id} href={`/products/${item.slug}`} className="group">
-                <div className="overflow-hidden rounded-xl border border-gray-200 bg-white shadow-sm transition-all hover:shadow-lg">
-                  <div className="relative aspect-square overflow-hidden bg-gray-100">
-                    {imgUrl ? (
-                      <Image
-                        src={imgUrl}
-                        alt={item.name}
-                        fill
-                        sizes="(max-width: 640px) 50vw, 25vw"
-                        className="object-cover transition-transform duration-300 group-hover:scale-105"
-                      />
-                    ) : (
-                      <div className="flex h-full items-center justify-center text-muted-foreground">
-                        No image
-                      </div>
-                    )}
-                  </div>
-                  <div className="p-3">
-                    <h3 className="line-clamp-2 text-sm font-medium text-charcoal transition-colors group-hover:text-rose">
-                      {item.name}
-                    </h3>
-                    <p className="mt-1.5 text-sm font-semibold text-charcoal">
-                      {formatPrice(item.price / 100)}
-                    </p>
-                  </div>
-                </div>
-              </Link>
-            )
-          })}
+      {similarProducts.length > 0 && (
+        <div className="mt-16">
+          <h2 className="font-heading text-2xl font-bold text-charcoal mb-6">
+            You May Also Like
+          </h2>
+          <div className="grid grid-cols-2 gap-4 md:grid-cols-4 md:gap-6">
+            {similarProducts.map((item) => (
+              <ProductCard
+                key={item.id}
+                product={{
+                  id: item.id,
+                  name: item.name,
+                  slug: item.slug,
+                  basePrice: item.basePrice as unknown as number,
+                  compareAtPrice: item.compareAtPrice as unknown as number | null,
+                  images: item.images.map((img) => ({
+                    url: img.url,
+                    altText: img.altText,
+                  })),
+                  isPersonalizable: item.isPersonalizable,
+                }}
+              />
+            ))}
+          </div>
         </div>
-      </div>
+      )}
     </div>
   )
 }

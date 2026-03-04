@@ -2,6 +2,7 @@
 
 import { useState } from "react"
 import Link from "next/link"
+import { useRouter } from "next/navigation"
 import { ShoppingBag, Search, Menu, Heart, User } from "lucide-react"
 
 import { useCartStore } from "@/stores/cart-store"
@@ -74,7 +75,19 @@ function ClerkAuth() {
 
 export function SiteHeader() {
   const [mobileOpen, setMobileOpen] = useState(false)
+  const [searchQuery, setSearchQuery] = useState("")
+  const router = useRouter()
   const itemCount = useCartStore((s) => s.getItemCount())
+
+  function handleSearch(e: React.FormEvent) {
+    e.preventDefault()
+    const q = searchQuery.trim()
+    if (q) {
+      router.push(`/products?search=${encodeURIComponent(q)}`)
+      setSearchQuery("")
+      setMobileOpen(false)
+    }
+  }
 
   return (
     <header className="sticky top-0 z-50 w-full border-b border-gray-200 bg-white/95 backdrop-blur supports-[backdrop-filter]:bg-white/80">
@@ -100,16 +113,18 @@ export function SiteHeader() {
         </nav>
 
         {/* Search - Desktop */}
-        <div className="hidden max-w-sm flex-1 md:flex">
+        <form onSubmit={handleSearch} className="hidden max-w-sm flex-1 md:flex">
           <div className="relative w-full">
             <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
             <Input
               type="search"
               placeholder="Search gifts..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
               className="h-9 pl-9 bg-gray-50 border-gray-200 focus-visible:ring-rose/30"
             />
           </div>
-        </div>
+        </form>
 
         {/* Right Actions */}
         <div className="flex items-center gap-1 sm:gap-2">
@@ -120,7 +135,7 @@ export function SiteHeader() {
             className="md:hidden text-gray-600 hover:text-charcoal hover:bg-gray-100"
             asChild
           >
-            <Link href="/search">
+            <Link href="/products">
               <Search className="h-5 w-5" />
               <span className="sr-only">Search</span>
             </Link>
@@ -199,16 +214,18 @@ export function SiteHeader() {
                 </Link>
               </nav>
               {/* Mobile Search */}
-              <div className="mt-4 px-4">
+              <form onSubmit={handleSearch} className="mt-4 px-4">
                 <div className="relative">
                   <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
                   <Input
                     type="search"
                     placeholder="Search gifts..."
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
                     className="pl-9 bg-gray-50 border-gray-200"
                   />
                 </div>
-              </div>
+              </form>
             </SheetContent>
           </Sheet>
         </div>

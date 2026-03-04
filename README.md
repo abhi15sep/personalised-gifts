@@ -20,6 +20,28 @@ A full-featured personalised gifts e-commerce website built with Next.js 15, MyS
 | Canvas | Fabric.js |
 | Deployment | Standalone Node.js (Hostinger VPS) |
 
+## Quick Start (Local Development)
+
+```bash
+# 1. Clone and install
+git clone YOUR_REPO_URL && cd personalised-gift
+npm install
+
+# 2. Set up environment
+cp .env.example .env
+# Edit .env with your API keys (see "Set Up Third-Party Services" below)
+
+# 3. Database setup
+npx prisma generate
+npx prisma migrate dev
+npx prisma db seed
+
+# 4. Run
+npm run dev
+```
+
+Open [http://localhost:3000](http://localhost:3000). The seed creates 8 categories, 10 occasions, and 15 products with personalisation options.
+
 ## Project Structure
 
 ```

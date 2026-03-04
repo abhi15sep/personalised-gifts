@@ -129,7 +129,7 @@ export default function CheckoutPage() {
       productId: item.productId,
       variantId: item.variantId ?? undefined,
       quantity: item.quantity,
-      personalizationData: item.personalizationData ?? undefined,
+      personalizationData: item.personalization ?? undefined,
     }))
 
     const address = {

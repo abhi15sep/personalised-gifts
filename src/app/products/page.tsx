@@ -1,9 +1,7 @@
 import Link from "next/link"
-import Image from "next/image"
 import { SlidersHorizontal } from "lucide-react"
 
-import { CATEGORIES, OCCASIONS, PRODUCT_IMAGES } from "@/lib/constants"
-import { formatPrice } from "@/lib/format"
+import { getProducts, getCategories, getOccasions } from "@/lib/actions/products"
 import {
   Breadcrumb,
   BreadcrumbItem,
@@ -13,17 +11,6 @@ import {
   BreadcrumbSeparator,
 } from "@/components/ui/breadcrumb"
 import { Button } from "@/components/ui/button"
-import { Checkbox } from "@/components/ui/checkbox"
-import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select"
-import { Separator } from "@/components/ui/separator"
 import {
   Sheet,
   SheetContent,
@@ -31,7 +18,6 @@ import {
   SheetTitle,
   SheetTrigger,
 } from "@/components/ui/sheet"
-import { Switch } from "@/components/ui/switch"
 import {
   Pagination,
   PaginationContent,
@@ -40,110 +26,56 @@ import {
   PaginationNext,
   PaginationPrevious,
 } from "@/components/ui/pagination"
+import { ProductCard } from "@/components/product/product-card"
+import { ProductFilters } from "@/components/product/product-filters"
+import { SortSelect } from "@/components/product/sort-select"
 
-// Placeholder products for now
-const PLACEHOLDER_PRODUCTS = [
-  { id: 1, name: "Personalised Name Mug", slug: "personalised-name-mug", price: 1299, isPersonalizable: true },
-  { id: 2, name: "Engraved Wooden Photo Frame", slug: "engraved-wooden-photo-frame", price: 2499, isPersonalizable: true },
-  { id: 3, name: "Custom Star Map Print", slug: "custom-star-map-print", price: 3499, isPersonalizable: true },
-  { id: 4, name: "Hand-Stamped Silver Bracelet", slug: "hand-stamped-silver-bracelet", price: 4599, isPersonalizable: true },
-  { id: 5, name: "Personalised Chopping Board", slug: "personalised-chopping-board", price: 2999, isPersonalizable: true },
-  { id: 6, name: "Custom Family Portrait Illustration", slug: "custom-family-portrait", price: 5999, isPersonalizable: true },
-  { id: 7, name: "Engraved Leather Keyring", slug: "engraved-leather-keyring", price: 1499, isPersonalizable: true },
-  { id: 8, name: "Personalised Baby Blanket", slug: "personalised-baby-blanket", price: 3299, isPersonalizable: true },
-  { id: 9, name: "Custom Coordinates Necklace", slug: "custom-coordinates-necklace", price: 3999, isPersonalizable: true },
-]
-
-function FilterSidebar() {
-  return (
-    <div className="space-y-6">
-      {/* Categories */}
-      <div>
-        <h3 className="mb-3 text-sm font-semibold text-charcoal uppercase tracking-wide">
-          Category
-        </h3>
-        <div className="space-y-2.5">
-          {CATEGORIES.map((category) => (
-            <div key={category.slug} className="flex items-center gap-2">
-              <Checkbox id={`cat-${category.slug}`} />
-              <Label
-                htmlFor={`cat-${category.slug}`}
-                className="text-sm font-normal text-gray-600 cursor-pointer"
-              >
-                {category.name}
-              </Label>
-            </div>
-          ))}
-        </div>
-      </div>
-
-      <Separator className="bg-gray-200" />
-
-      {/* Occasions */}
-      <div>
-        <h3 className="mb-3 text-sm font-semibold text-charcoal uppercase tracking-wide">
-          Occasion
-        </h3>
-        <div className="space-y-2.5">
-          {OCCASIONS.map((occasion) => (
-            <div key={occasion.slug} className="flex items-center gap-2">
-              <Checkbox id={`occ-${occasion.slug}`} />
-              <Label
-                htmlFor={`occ-${occasion.slug}`}
-                className="text-sm font-normal text-gray-600 cursor-pointer"
-              >
-                {occasion.name}
-              </Label>
-            </div>
-          ))}
-        </div>
-      </div>
-
-      <Separator className="bg-gray-200" />
-
-      {/* Price Range */}
-      <div>
-        <h3 className="mb-3 text-sm font-semibold text-charcoal uppercase tracking-wide">
-          Price Range
-        </h3>
-        <div className="flex items-center gap-2">
-          <Input
-            type="number"
-            placeholder="Min"
-            className="h-9 bg-white border-gray-200"
-          />
-          <span className="text-gray-400">-</span>
-          <Input
-            type="number"
-            placeholder="Max"
-            className="h-9 bg-white border-gray-200"
-          />
-        </div>
-      </div>
-
-      <Separator className="bg-gray-200" />
-
-      {/* Personalizable Only */}
-      <div className="flex items-center justify-between">
-        <Label
-          htmlFor="personalizable-toggle"
-          className="text-sm font-normal text-gray-600 cursor-pointer"
-        >
-          Personalizable only
-        </Label>
-        <Switch id="personalizable-toggle" />
-      </div>
-
-      <Separator className="bg-gray-200" />
-
-      <Button variant="outline" className="w-full border-gray-300 text-gray-600 hover:bg-gray-100">
-        Clear All Filters
-      </Button>
-    </div>
-  )
+interface ProductsPageProps {
+  searchParams: Promise<{
+    category?: string
+    occasion?: string
+    sort?: string
+    page?: string
+    priceMin?: string
+    priceMax?: string
+    search?: string
+  }>
 }
 
-export default function ProductsPage() {
+export default async function ProductsPage({ searchParams }: ProductsPageProps) {
+  const params = await searchParams
+  const page = Number(params.page) || 1
+  const sortBy = (params.sort as 'newest' | 'price-asc' | 'price-desc' | 'name') || 'newest'
+  const priceMin = params.priceMin ? Number(params.priceMin) * 100 : undefined
+  const priceMax = params.priceMax ? Number(params.priceMax) * 100 : undefined
+
+  const [{ products, totalCount, totalPages }, categories, occasions] = await Promise.all([
+    getProducts({
+      categorySlug: params.category,
+      occasionSlug: params.occasion,
+      sortBy,
+      page,
+      priceMin,
+      priceMax,
+      search: params.search,
+    }),
+    getCategories(),
+    getOccasions(),
+  ])
+
+  function buildPageUrl(pageNum: number) {
+    const p = new URLSearchParams()
+    if (params.category) p.set("category", params.category)
+    if (params.occasion) p.set("occasion", params.occasion)
+    if (params.sort) p.set("sort", params.sort)
+    if (params.priceMin) p.set("priceMin", params.priceMin)
+    if (params.priceMax) p.set("priceMax", params.priceMax)
+    if (params.search) p.set("search", params.search)
+    if (pageNum > 1) p.set("page", String(pageNum))
+    const qs = p.toString()
+    return `/products${qs ? `?${qs}` : ""}`
+  }
+
   return (
     <div className="mx-auto max-w-7xl px-4 py-6 sm:px-6 lg:px-8">
       {/* Breadcrumb */}
@@ -163,10 +95,10 @@ export default function ProductsPage() {
       <div className="mb-8 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <h1 className="font-heading text-3xl font-bold text-charcoal">
-            All Products
+            {params.search ? `Results for "${params.search}"` : "All Products"}
           </h1>
           <p className="mt-1 text-sm text-gray-500">
-            {PLACEHOLDER_PRODUCTS.length} products
+            {totalCount} {totalCount === 1 ? "product" : "products"}
           </p>
         </div>
 
@@ -189,23 +121,13 @@ export default function ProductsPage() {
                 </SheetTitle>
               </SheetHeader>
               <div className="mt-4 px-4 pb-6">
-                <FilterSidebar />
+                <ProductFilters categories={categories} occasions={occasions} />
               </div>
             </SheetContent>
           </Sheet>
 
           {/* Sort */}
-          <Select defaultValue="newest">
-            <SelectTrigger className="w-[180px] border-gray-200 bg-white">
-              <SelectValue placeholder="Sort by" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="price-asc">Price: Low to High</SelectItem>
-              <SelectItem value="price-desc">Price: High to Low</SelectItem>
-              <SelectItem value="newest">Newest</SelectItem>
-              <SelectItem value="bestselling">Bestselling</SelectItem>
-            </SelectContent>
-          </Select>
+          <SortSelect />
         </div>
       </div>
 
@@ -213,81 +135,69 @@ export default function ProductsPage() {
       <div className="flex gap-8">
         {/* Desktop Sidebar */}
         <aside className="hidden w-64 shrink-0 lg:block">
-          <FilterSidebar />
+          <ProductFilters categories={categories} occasions={occasions} />
         </aside>
 
         {/* Product Grid */}
         <div className="flex-1">
-          <div className="grid grid-cols-2 gap-4 md:grid-cols-3 md:gap-6">
-            {PLACEHOLDER_PRODUCTS.map((product) => {
-              const imageUrl = PRODUCT_IMAGES[product.slug]
-              return (
-                <Link
+          {products.length === 0 ? (
+            <div className="flex flex-col items-center justify-center py-20 text-center">
+              <p className="text-lg font-medium text-charcoal">No products found</p>
+              <p className="mt-1 text-sm text-gray-500">
+                Try adjusting your filters or search term
+              </p>
+              <Button asChild variant="outline" className="mt-4">
+                <Link href="/products">Clear all filters</Link>
+              </Button>
+            </div>
+          ) : (
+            <div className="grid grid-cols-2 gap-4 md:grid-cols-3 md:gap-6">
+              {products.map((product) => (
+                <ProductCard
                   key={product.id}
-                  href={`/products/${product.slug}`}
-                  className="group"
-                >
-                  <div className="overflow-hidden rounded-xl border border-gray-200 bg-white shadow-sm transition-all hover:shadow-lg">
-                    {/* Product Image */}
-                    <div className="relative aspect-square overflow-hidden bg-gray-100">
-                      {product.isPersonalizable && (
-                        <span className="absolute left-2 top-2 z-10 rounded-full bg-rose px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-white">
-                          Personalise
-                        </span>
-                      )}
-                      {imageUrl ? (
-                        <Image
-                          src={imageUrl}
-                          alt={product.name}
-                          fill
-                          sizes="(max-width: 640px) 50vw, 33vw"
-                          className="object-cover transition-transform duration-300 group-hover:scale-105"
-                        />
-                      ) : (
-                        <div className="flex h-full items-center justify-center text-muted-foreground">
-                          No image
-                        </div>
-                      )}
-                    </div>
-                    {/* Details */}
-                    <div className="p-3">
-                      <h3 className="line-clamp-2 text-sm font-medium text-charcoal transition-colors group-hover:text-rose">
-                        {product.name}
-                      </h3>
-                      <p className="mt-1.5 text-sm font-semibold text-charcoal">
-                        {formatPrice(product.price / 100)}
-                      </p>
-                    </div>
-                  </div>
-                </Link>
-              )
-            })}
-          </div>
+                  product={{
+                    id: product.id,
+                    name: product.name,
+                    slug: product.slug,
+                    basePrice: product.basePrice as unknown as number,
+                    compareAtPrice: product.compareAtPrice as unknown as number | null,
+                    images: product.images.map((img) => ({
+                      url: img.url,
+                      altText: img.altText,
+                    })),
+                    isPersonalizable: product.isPersonalizable,
+                  }}
+                />
+              ))}
+            </div>
+          )}
 
           {/* Pagination */}
-          <div className="mt-10">
-            <Pagination>
-              <PaginationContent>
-                <PaginationItem>
-                  <PaginationPrevious href="#" />
-                </PaginationItem>
-                <PaginationItem>
-                  <PaginationLink href="#" isActive>
-                    1
-                  </PaginationLink>
-                </PaginationItem>
-                <PaginationItem>
-                  <PaginationLink href="#">2</PaginationLink>
-                </PaginationItem>
-                <PaginationItem>
-                  <PaginationLink href="#">3</PaginationLink>
-                </PaginationItem>
-                <PaginationItem>
-                  <PaginationNext href="#" />
-                </PaginationItem>
-              </PaginationContent>
-            </Pagination>
-          </div>
+          {totalPages > 1 && (
+            <div className="mt-10">
+              <Pagination>
+                <PaginationContent>
+                  {page > 1 && (
+                    <PaginationItem>
+                      <PaginationPrevious href={buildPageUrl(page - 1)} />
+                    </PaginationItem>
+                  )}
+                  {Array.from({ length: totalPages }, (_, i) => i + 1).map((p) => (
+                    <PaginationItem key={p}>
+                      <PaginationLink href={buildPageUrl(p)} isActive={p === page}>
+                        {p}
+                      </PaginationLink>
+                    </PaginationItem>
+                  ))}
+                  {page < totalPages && (
+                    <PaginationItem>
+                      <PaginationNext href={buildPageUrl(page + 1)} />
+                    </PaginationItem>
+                  )}
+                </PaginationContent>
+              </Pagination>
+            </div>
+          )}
         </div>
       </div>
     </div>
