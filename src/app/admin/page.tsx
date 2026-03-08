@@ -1,3 +1,5 @@
+export const dynamic = "force-dynamic"
+
 import { PoundSterling, ShoppingCart, Package, Users } from "lucide-react"
 import {
   Card,

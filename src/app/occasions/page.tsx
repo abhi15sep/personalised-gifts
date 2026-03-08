@@ -1,7 +1,10 @@
+export const dynamic = "force-dynamic"
+
 import Link from "next/link"
 import Image from "next/image"
 import type { Metadata } from "next"
-import { OCCASIONS, OCCASION_IMAGES } from "@/lib/constants"
+import { getOccasions } from "@/lib/actions/products"
+import { OCCASION_IMAGES } from "@/lib/constants"
 
 export const metadata: Metadata = {
   title: "Shop by Occasion",
@@ -9,7 +12,9 @@ export const metadata: Metadata = {
     "Find the perfect personalised gift for every occasion — birthdays, weddings, anniversaries, Christmas and more.",
 }
 
-export default function OccasionsPage() {
+export default async function OccasionsPage() {
+  const occasions = await getOccasions()
+
   return (
     <div className="px-4 py-10 md:py-16">
       <div className="mx-auto max-w-6xl">
@@ -24,8 +29,8 @@ export default function OccasionsPage() {
         </div>
 
         <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 md:gap-6">
-          {OCCASIONS.map((occasion) => {
-            const imgUrl = OCCASION_IMAGES[occasion.slug]
+          {occasions.map((occasion) => {
+            const imgUrl = occasion.bannerUrl || OCCASION_IMAGES[occasion.slug]
             return (
               <Link
                 key={occasion.slug}
@@ -42,7 +47,9 @@ export default function OccasionsPage() {
                       className="object-cover transition-transform duration-300 group-hover:scale-105"
                     />
                   ) : (
-                    <div className="h-full w-full bg-gray-100" />
+                    <div className="flex h-full w-full items-center justify-center bg-gray-100 text-2xl">
+                      {occasion.icon}
+                    </div>
                   )}
                   <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/20 to-transparent" />
                   <span className="absolute bottom-3 left-3 text-sm font-semibold text-white">
