@@ -1,5 +1,5 @@
 import Link from "next/link"
-import { LayoutDashboard, Package, ShoppingCart, Users } from "lucide-react"
+import { LayoutDashboard, Package, ShoppingCart, Users, CalendarHeart } from "lucide-react"
 import { requireAdminOrRedirect } from "@/lib/actions/admin"
 
 export const dynamic = "force-dynamic"
@@ -9,6 +9,7 @@ const sidebarLinks = [
   { href: "/admin/products", label: "Products", icon: Package },
   { href: "/admin/orders", label: "Orders", icon: ShoppingCart },
   { href: "/admin/customers", label: "Customers", icon: Users },
+  { href: "/admin/occasions", label: "Occasions", icon: CalendarHeart },
 ]
 
 export default async function AdminLayout({

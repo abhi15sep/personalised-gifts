@@ -60,6 +60,10 @@ export const OCCASION_IMAGES: Record<string, string> = {
   'thank-you': 'https://images.unsplash.com/photo-1606567595334-d39972c85dbe?w=400&h=300&fit=crop',
 }
 
+// Default placeholder banner for occasions — override per-occasion via admin panel
+export const DEFAULT_OCCASION_BANNER = '/images/banners/occasion-default.jpg'
+export const DEFAULT_OCCASION_TAGLINE = 'Discover unique personalised gifts, handcrafted with love'
+
 export const OCCASIONS = [
   { name: 'Birthday', slug: 'birthday', icon: '🎂' },
   { name: 'Wedding', slug: 'wedding', icon: '💒' },

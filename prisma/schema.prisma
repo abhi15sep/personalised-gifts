@@ -120,10 +120,12 @@ model Category {
 // ─── Occasion ────────────────────────────────────────────────────────────────
 
 model Occasion {
-  id   Int     @id @default(autoincrement())
-  name String
-  slug String  @unique
-  icon String?
+  id        Int     @id @default(autoincrement())
+  name      String
+  slug      String  @unique
+  icon      String?
+  bannerUrl String?
+  tagline   String? @db.Text
 
   products ProductOccasion[]
 }

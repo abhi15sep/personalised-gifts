@@ -53,16 +53,16 @@ async function main() {
 
   // ─── Occasions ────────────────────────────────────────────────────────────
   const occasionsData = [
-    { name: 'Birthday', slug: 'birthday', icon: '🎂' },
-    { name: 'Wedding', slug: 'wedding', icon: '💒' },
-    { name: 'Anniversary', slug: 'anniversary', icon: '❤️' },
-    { name: 'New Baby', slug: 'new-baby', icon: '👶' },
-    { name: 'Christmas', slug: 'christmas', icon: '🎄' },
-    { name: 'Graduation', slug: 'graduation', icon: '🎓' },
-    { name: "Valentine's Day", slug: 'valentines-day', icon: '💝' },
-    { name: "Mother's Day", slug: 'mothers-day', icon: '💐' },
-    { name: "Father's Day", slug: 'fathers-day', icon: '👔' },
-    { name: 'Thank You', slug: 'thank-you', icon: '🙏' },
+    { name: 'Birthday', slug: 'birthday', icon: '🎂', bannerUrl: null, tagline: null },
+    { name: 'Wedding', slug: 'wedding', icon: '💒', bannerUrl: null, tagline: null },
+    { name: 'Anniversary', slug: 'anniversary', icon: '❤️', bannerUrl: null, tagline: null },
+    { name: 'New Baby', slug: 'new-baby', icon: '👶', bannerUrl: null, tagline: null },
+    { name: 'Christmas', slug: 'christmas', icon: '🎄', bannerUrl: null, tagline: null },
+    { name: 'Graduation', slug: 'graduation', icon: '🎓', bannerUrl: null, tagline: null },
+    { name: "Valentine's Day", slug: 'valentines-day', icon: '💝', bannerUrl: '/images/banners/valentines-day.jpg', tagline: 'Show them how much you care with a gift made just for them' },
+    { name: "Mother's Day", slug: 'mothers-day', icon: '💐', bannerUrl: null, tagline: null },
+    { name: "Father's Day", slug: 'fathers-day', icon: '👔', bannerUrl: null, tagline: null },
+    { name: 'Thank You', slug: 'thank-you', icon: '🙏', bannerUrl: null, tagline: null },
   ];
 
   const occasions = await Promise.all(
