@@ -14,6 +14,7 @@ import {
   MapPin,
   Settings,
 } from "lucide-react"
+import { useUser, useClerk, SignInButton } from "@clerk/nextjs"
 
 import { useCartStore } from "@/stores/cart-store"
 import { Button } from "@/components/ui/button"
@@ -41,131 +42,39 @@ const navLinks = [
 ]
 
 function ClerkAuth() {
-  try {
-    // eslint-disable-next-line @typescript-eslint/no-require-imports
-    const { useUser, useClerk, SignInButton } = require("@clerk/nextjs")
-    const { isSignedIn, isLoaded, user } = useUser()
-    const { signOut } = useClerk()
+  const { isSignedIn, isLoaded, user } = useUser()
+  const { signOut } = useClerk()
 
-    if (!isLoaded) return null
+  if (!isLoaded) return null
 
-    if (isSignedIn) {
-      const initials = user?.firstName
-        ? `${user.firstName[0]}${user.lastName?.[0] || ""}`.toUpperCase()
-        : user?.emailAddresses?.[0]?.emailAddress?.[0]?.toUpperCase() || "U"
-
-      return (
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Button
-              variant="ghost"
-              size="icon"
-              className="relative h-9 w-9 rounded-full bg-rose/10 text-rose hover:bg-rose/20"
-            >
-              {user?.imageUrl ? (
-                // eslint-disable-next-line @next/next/no-img-element
-                <img
-                  src={user.imageUrl}
-                  alt="Profile"
-                  className="h-8 w-8 rounded-full object-cover"
-                />
-              ) : (
-                <span className="text-sm font-medium">{initials}</span>
-              )}
-            </Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="end" className="w-56">
-            <div className="px-3 py-2">
-              <p className="text-sm font-medium">
-                {user?.firstName
-                  ? `${user.firstName} ${user.lastName || ""}`
-                  : "My Account"}
-              </p>
-              <p className="text-xs text-muted-foreground truncate">
-                {user?.emailAddresses?.[0]?.emailAddress}
-              </p>
-            </div>
-            <DropdownMenuSeparator />
-            <DropdownMenuItem asChild>
-              <Link href="/account" className="cursor-pointer">
-                <Package className="mr-2 h-4 w-4" />
-                My Orders
-              </Link>
-            </DropdownMenuItem>
-            <DropdownMenuItem asChild>
-              <Link href="/account/wishlist" className="cursor-pointer">
-                <Heart className="mr-2 h-4 w-4" />
-                Wishlist
-              </Link>
-            </DropdownMenuItem>
-            <DropdownMenuItem asChild>
-              <Link href="/account/addresses" className="cursor-pointer">
-                <MapPin className="mr-2 h-4 w-4" />
-                Addresses
-              </Link>
-            </DropdownMenuItem>
-            <DropdownMenuItem asChild>
-              <Link href="/account/settings" className="cursor-pointer">
-                <Settings className="mr-2 h-4 w-4" />
-                Settings
-              </Link>
-            </DropdownMenuItem>
-            <DropdownMenuSeparator />
-            <DropdownMenuItem
-              onClick={() => signOut({ redirectUrl: "/" })}
-              className="cursor-pointer text-red-600 focus:text-red-600"
-            >
-              <LogOut className="mr-2 h-4 w-4" />
-              Sign Out
-            </DropdownMenuItem>
-          </DropdownMenuContent>
-        </DropdownMenu>
-      )
-    }
+  if (isSignedIn) {
+    const initials = user?.firstName
+      ? `${user.firstName[0]}${user.lastName?.[0] || ""}`.toUpperCase()
+      : user?.emailAddresses?.[0]?.emailAddress?.[0]?.toUpperCase() || "U"
 
     return (
-      <SignInButton mode="modal">
-        <Button
-          variant="ghost"
-          size="icon"
-          className="text-gray-600 hover:text-charcoal hover:bg-gray-100"
-        >
-          <User className="h-5 w-5" />
-          <span className="sr-only">Sign in</span>
-        </Button>
-      </SignInButton>
-    )
-  } catch {
-    return (
-      <Button
-        variant="ghost"
-        size="icon"
-        className="text-gray-600 hover:text-charcoal hover:bg-gray-100"
-        asChild
-      >
-        <Link href="/sign-in">
-          <User className="h-5 w-5" />
-          <span className="sr-only">Sign in</span>
-        </Link>
-      </Button>
-    )
-  }
-}
-
-function MobileClerkAuth({ onClose }: { onClose: () => void }) {
-  try {
-    // eslint-disable-next-line @typescript-eslint/no-require-imports
-    const { useUser, useClerk, SignInButton } = require("@clerk/nextjs")
-    const { isSignedIn, isLoaded, user } = useUser()
-    const { signOut } = useClerk()
-
-    if (!isLoaded) return null
-
-    if (isSignedIn) {
-      return (
-        <div className="border-t border-gray-100 pt-4 mt-4">
-          <div className="px-3 pb-3">
-            <p className="text-sm font-medium text-charcoal">
+      <DropdownMenu>
+        <DropdownMenuTrigger asChild>
+          <Button
+            variant="ghost"
+            size="icon"
+            className="relative h-9 w-9 rounded-full bg-rose/10 text-rose hover:bg-rose/20"
+          >
+            {user?.imageUrl ? (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img
+                src={user.imageUrl}
+                alt="Profile"
+                className="h-8 w-8 rounded-full object-cover"
+              />
+            ) : (
+              <span className="text-sm font-medium">{initials}</span>
+            )}
+          </Button>
+        </DropdownMenuTrigger>
+        <DropdownMenuContent align="end" className="w-56">
+          <div className="px-3 py-2">
+            <p className="text-sm font-medium">
               {user?.firstName
                 ? `${user.firstName} ${user.lastName || ""}`
                 : "My Account"}
@@ -174,63 +83,120 @@ function MobileClerkAuth({ onClose }: { onClose: () => void }) {
               {user?.emailAddresses?.[0]?.emailAddress}
             </p>
           </div>
-          <Link
-            href="/account"
-            onClick={onClose}
-            className="flex items-center gap-2 rounded-md px-3 py-2.5 text-sm font-medium text-gray-600 transition-colors hover:bg-gray-100 hover:text-charcoal"
+          <DropdownMenuSeparator />
+          <DropdownMenuItem asChild>
+            <Link href="/account" className="cursor-pointer">
+              <Package className="mr-2 h-4 w-4" />
+              My Orders
+            </Link>
+          </DropdownMenuItem>
+          <DropdownMenuItem asChild>
+            <Link href="/account/wishlist" className="cursor-pointer">
+              <Heart className="mr-2 h-4 w-4" />
+              Wishlist
+            </Link>
+          </DropdownMenuItem>
+          <DropdownMenuItem asChild>
+            <Link href="/account/addresses" className="cursor-pointer">
+              <MapPin className="mr-2 h-4 w-4" />
+              Addresses
+            </Link>
+          </DropdownMenuItem>
+          <DropdownMenuItem asChild>
+            <Link href="/account/settings" className="cursor-pointer">
+              <Settings className="mr-2 h-4 w-4" />
+              Settings
+            </Link>
+          </DropdownMenuItem>
+          <DropdownMenuSeparator />
+          <DropdownMenuItem
+            onClick={() => signOut({ redirectUrl: "/" })}
+            className="cursor-pointer text-red-600 focus:text-red-600"
           >
-            <Package className="h-4 w-4" />
-            My Orders
-          </Link>
-          <Link
-            href="/account/addresses"
-            onClick={onClose}
-            className="flex items-center gap-2 rounded-md px-3 py-2.5 text-sm font-medium text-gray-600 transition-colors hover:bg-gray-100 hover:text-charcoal"
-          >
-            <MapPin className="h-4 w-4" />
-            Addresses
-          </Link>
-          <button
-            onClick={() => {
-              signOut({ redirectUrl: "/" })
-              onClose()
-            }}
-            className="flex w-full items-center gap-2 rounded-md px-3 py-2.5 text-sm font-medium text-red-600 transition-colors hover:bg-red-50"
-          >
-            <LogOut className="h-4 w-4" />
+            <LogOut className="mr-2 h-4 w-4" />
             Sign Out
-          </button>
-        </div>
-      )
-    }
-
-    return (
-      <div className="border-t border-gray-100 pt-4 mt-4">
-        <SignInButton mode="modal">
-          <button
-            onClick={onClose}
-            className="flex w-full items-center gap-2 rounded-md px-3 py-2.5 text-sm font-medium text-gray-600 transition-colors hover:bg-gray-100 hover:text-charcoal"
-          >
-            <User className="h-4 w-4" />
-            Sign In
-          </button>
-        </SignInButton>
-      </div>
+          </DropdownMenuItem>
+        </DropdownMenuContent>
+      </DropdownMenu>
     )
-  } catch {
+  }
+
+  return (
+    <SignInButton mode="modal">
+      <Button
+        variant="ghost"
+        size="icon"
+        className="text-gray-600 hover:text-charcoal hover:bg-gray-100"
+      >
+        <User className="h-5 w-5" />
+        <span className="sr-only">Sign in</span>
+      </Button>
+    </SignInButton>
+  )
+}
+
+function MobileClerkAuth({ onClose }: { onClose: () => void }) {
+  const { isSignedIn, isLoaded, user } = useUser()
+  const { signOut } = useClerk()
+
+  if (!isLoaded) return null
+
+  if (isSignedIn) {
     return (
       <div className="border-t border-gray-100 pt-4 mt-4">
+        <div className="px-3 pb-3">
+          <p className="text-sm font-medium text-charcoal">
+            {user?.firstName
+              ? `${user.firstName} ${user.lastName || ""}`
+              : "My Account"}
+          </p>
+          <p className="text-xs text-muted-foreground truncate">
+            {user?.emailAddresses?.[0]?.emailAddress}
+          </p>
+        </div>
         <Link
-          href="/sign-in"
+          href="/account"
           onClick={onClose}
           className="flex items-center gap-2 rounded-md px-3 py-2.5 text-sm font-medium text-gray-600 transition-colors hover:bg-gray-100 hover:text-charcoal"
         >
-          <User className="h-4 w-4" />
-          Sign In
+          <Package className="h-4 w-4" />
+          My Orders
         </Link>
+        <Link
+          href="/account/addresses"
+          onClick={onClose}
+          className="flex items-center gap-2 rounded-md px-3 py-2.5 text-sm font-medium text-gray-600 transition-colors hover:bg-gray-100 hover:text-charcoal"
+        >
+          <MapPin className="h-4 w-4" />
+          Addresses
+        </Link>
+        <button
+          onClick={() => {
+            signOut({ redirectUrl: "/" })
+            onClose()
+          }}
+          className="flex w-full items-center gap-2 rounded-md px-3 py-2.5 text-sm font-medium text-red-600 transition-colors hover:bg-red-50"
+        >
+          <LogOut className="h-4 w-4" />
+          Sign Out
+        </button>
       </div>
     )
   }
+
+  return (
+    <div className="border-t border-gray-100 pt-4 mt-4">
+      <SignInButton mode="modal">
+        <button
+          onClick={onClose}
+          className="flex w-full items-center gap-2 rounded-md px-3 py-2.5 text-sm font-medium text-gray-600 transition-colors hover:bg-gray-100 hover:text-charcoal"
+        >
+          <User className="h-4 w-4" />
+          Sign In
+        </button>
+      </SignInButton>
+    </div>
+  )
 }
 
 export function SiteHeader() {
