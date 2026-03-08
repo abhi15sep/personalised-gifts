@@ -100,6 +100,7 @@ export async function createTinkPaymentRequest(
     currency: 'GBP',
     market: TINK_MARKET,
     recipientName: TINK_PAYEE_NAME,
+    paymentScheme: 'FASTER_PAYMENTS',
     sourceMessage: params.sourceMessage || `Payment ${params.reference}`,
     remittanceInformation: {
       type: 'UNSTRUCTURED',
