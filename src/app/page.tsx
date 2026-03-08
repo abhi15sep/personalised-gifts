@@ -4,54 +4,15 @@ import Link from "next/link"
 import Image from "next/image"
 import { Heart, Truck, Flag, ArrowRight, ShieldCheck, RotateCcw, Package } from "lucide-react"
 import { Button } from "@/components/ui/button"
-import { PRODUCT_IMAGES, HERO_IMAGE, DEFAULT_OCCASION_BANNER } from "@/lib/constants"
-import { getOccasions } from "@/lib/actions/products"
-
-const BESTSELLER_PRODUCTS = [
-  { name: "Personalised Name Mug", price: "£14.99", slug: "personalised-name-mug" },
-  { name: "Engraved Heart Necklace", price: "£29.99", slug: "engraved-heart-necklace" },
-  { name: "Custom Photo Cushion", price: "£24.99", slug: "custom-photo-cushion" },
-  { name: "Star Map Print", price: "£34.99", slug: "custom-star-map-print" },
-]
-
-const NEW_ARRIVAL_PRODUCTS = [
-  { name: "Wooden Watch", price: "£49.99", slug: "engraved-wooden-photo-frame" },
-  { name: "Coordinates Bracelet", price: "£39.99", slug: "custom-coordinates-necklace" },
-  { name: "Recipe Book", price: "£19.99", slug: "recipe-book" },
-  { name: "Rose Gold Pen", price: "£15.99", slug: "rose-gold-pen" },
-]
-
-function ProductCard({ name, price, slug }: { name: string; price: string; slug: string }) {
-  const imageUrl = PRODUCT_IMAGES[slug]
-  return (
-    <Link href={`/products/${slug}`} className="group">
-      <div className="overflow-hidden rounded-xl border border-gray-200 bg-white shadow-sm transition-all hover:shadow-lg">
-        <div className="relative aspect-square overflow-hidden bg-gray-100">
-          {imageUrl ? (
-            <Image
-              src={imageUrl}
-              alt={name}
-              fill
-              sizes="(max-width: 640px) 50vw, 25vw"
-              className="object-cover transition-transform duration-300 group-hover:scale-105"
-            />
-          ) : (
-            <div className="flex h-full items-center justify-center text-muted-foreground">
-              No image
-            </div>
-          )}
-        </div>
-        <div className="p-4">
-          <h3 className="text-sm font-medium text-charcoal group-hover:text-rose transition-colors">{name}</h3>
-          <p className="mt-1 text-sm font-semibold text-rose">{price}</p>
-        </div>
-      </div>
-    </Link>
-  )
-}
+import { HERO_IMAGE, DEFAULT_OCCASION_BANNER } from "@/lib/constants"
+import { getOccasions, getProducts } from "@/lib/actions/products"
+import { ProductCard } from "@/components/product/product-card"
 
 export default async function HomePage() {
-  const occasions = await getOccasions()
+  const [occasions, { products: newestProducts }] = await Promise.all([
+    getOccasions(),
+    getProducts({ limit: 8, sortBy: 'newest' }),
+  ])
   return (
     <div className="flex flex-col">
       {/* Hero Banner */}
@@ -115,27 +76,40 @@ export default async function HomePage() {
         </div>
       </section>
 
-      {/* Bestsellers */}
-      <section className="bg-[#f8f9fa] px-4 py-16 md:py-20">
-        <div className="mx-auto max-w-6xl">
-          <div className="flex items-center justify-between">
-            <h2 className="font-heading text-3xl font-bold text-charcoal md:text-4xl">
-              Bestsellers
-            </h2>
-            <Link
-              href="/products?sort=bestselling"
-              className="flex items-center gap-1 text-sm font-medium text-rose hover:underline"
-            >
-              View All <ArrowRight className="size-4" />
-            </Link>
+      {/* Our Products */}
+      {newestProducts.length > 0 && (
+        <section className="bg-[#f8f9fa] px-4 py-16 md:py-20">
+          <div className="mx-auto max-w-6xl">
+            <div className="flex items-center justify-between">
+              <h2 className="font-heading text-3xl font-bold text-charcoal md:text-4xl">
+                Our Products
+              </h2>
+              <Link
+                href="/products"
+                className="flex items-center gap-1 text-sm font-medium text-rose hover:underline"
+              >
+                View All <ArrowRight className="size-4" />
+              </Link>
+            </div>
+            <div className="mt-8 grid grid-cols-2 gap-4 md:grid-cols-4 md:gap-6">
+              {newestProducts.map((product) => (
+                <ProductCard
+                  key={product.id}
+                  product={{
+                    id: product.id,
+                    name: product.name,
+                    slug: product.slug,
+                    basePrice: Number(product.basePrice),
+                    compareAtPrice: product.compareAtPrice ? Number(product.compareAtPrice) : null,
+                    images: product.images.map((img) => ({ url: img.url, altText: img.altText })),
+                    isPersonalizable: product.isPersonalizable,
+                  }}
+                />
+              ))}
+            </div>
           </div>
-          <div className="mt-8 grid grid-cols-2 gap-4 md:grid-cols-4 md:gap-6">
-            {BESTSELLER_PRODUCTS.map((product) => (
-              <ProductCard key={product.name} {...product} />
-            ))}
-          </div>
-        </div>
-      </section>
+        </section>
+      )}
 
       {/* Gift Finder CTA Banner */}
       <section className="px-4 py-16 md:py-20">
@@ -153,28 +127,6 @@ export default async function HomePage() {
           >
             <Link href="/gift-finder">Take the Quiz</Link>
           </Button>
-        </div>
-      </section>
-
-      {/* New Arrivals */}
-      <section className="bg-[#f8f9fa] px-4 py-16 md:py-20">
-        <div className="mx-auto max-w-6xl">
-          <div className="flex items-center justify-between">
-            <h2 className="font-heading text-3xl font-bold text-charcoal md:text-4xl">
-              New Arrivals
-            </h2>
-            <Link
-              href="/products?sort=newest"
-              className="flex items-center gap-1 text-sm font-medium text-rose hover:underline"
-            >
-              View All <ArrowRight className="size-4" />
-            </Link>
-          </div>
-          <div className="mt-8 grid grid-cols-2 gap-4 md:grid-cols-4 md:gap-6">
-            {NEW_ARRIVAL_PRODUCTS.map((product) => (
-              <ProductCard key={product.name} {...product} />
-            ))}
-          </div>
         </div>
       </section>
 
