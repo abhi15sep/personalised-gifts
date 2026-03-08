@@ -99,7 +99,7 @@ export default async function OrdersPage() {
                     >
                       <span>
                         {(item.productSnapshot as { name?: string })?.name ||
-                          item.product.name}{" "}
+                          item.product?.name || 'Deleted Product'}{" "}
                         x {item.quantity}
                       </span>
                       <span>

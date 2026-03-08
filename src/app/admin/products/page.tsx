@@ -104,14 +104,14 @@ export default function ProductsPage() {
     loadProducts()
   }
 
-  const handleDelete = async (id: number) => {
+  const handleDelete = async (id: number, force = false) => {
     setFeedback(null)
     try {
-      const result = await deleteProduct(id)
+      const result = await deleteProduct(id, force)
       if (result.archived) {
         setFeedback({ type: "success", message: result.message ?? "Product archived." })
       } else {
-        setFeedback({ type: "success", message: "Product deleted successfully." })
+        setFeedback({ type: "success", message: "Product deleted permanently." })
       }
       loadProducts()
     } catch (err) {
@@ -249,19 +249,31 @@ export default function ProductsPage() {
                           </AlertDialogTrigger>
                           <AlertDialogContent>
                             <AlertDialogHeader>
-                              <AlertDialogTitle>Delete product?</AlertDialogTitle>
+                              <AlertDialogTitle>
+                                {product.status === "ARCHIVED"
+                                  ? "Permanently delete product?"
+                                  : "Delete product?"}
+                              </AlertDialogTitle>
                               <AlertDialogDescription>
-                                This will permanently delete &quot;{product.name}&quot; and
-                                all its images. This action cannot be undone.
+                                {product.status === "ARCHIVED"
+                                  ? `This will permanently delete "${product.name}" and unlink it from any existing orders. Order history will be preserved via snapshots. This cannot be undone.`
+                                  : `This will delete "${product.name}" and all its images. If it has orders, it will be archived instead.`}
                               </AlertDialogDescription>
                             </AlertDialogHeader>
                             <AlertDialogFooter>
                               <AlertDialogCancel>Cancel</AlertDialogCancel>
                               <AlertDialogAction
-                                onClick={() => handleDelete(product.id)}
+                                onClick={() =>
+                                  handleDelete(
+                                    product.id,
+                                    product.status === "ARCHIVED"
+                                  )
+                                }
                                 className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
                               >
-                                Delete
+                                {product.status === "ARCHIVED"
+                                  ? "Permanently Delete"
+                                  : "Delete"}
                               </AlertDialogAction>
                             </AlertDialogFooter>
                           </AlertDialogContent>

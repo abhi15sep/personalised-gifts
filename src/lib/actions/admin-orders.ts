@@ -103,8 +103,8 @@ export async function getAdminOrder(id: string) {
       const snapshot = item.productSnapshot as Record<string, unknown> | null
       return {
         id: item.id.toString(),
-        name: (snapshot?.name as string) || item.product.name,
-        imageUrl: item.product.images[0]?.url ?? null,
+        name: (snapshot?.name as string) || item.product?.name || 'Deleted Product',
+        imageUrl: item.product?.images[0]?.url ?? null,
         quantity: item.quantity,
         unitPrice: Number(item.unitPrice),
         personalizationData: item.personalizationData as Record<string, string> | null,

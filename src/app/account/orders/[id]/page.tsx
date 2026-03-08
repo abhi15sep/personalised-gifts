@@ -96,8 +96,8 @@ export default async function OrderDetailPage({
           <CardContent className="space-y-4">
             {order.items.map((item) => {
               const snapshot = item.productSnapshot as Record<string, unknown> | null
-              const name = (snapshot?.name as string) || item.product.name
-              const imageUrl = item.product.images[0]?.url ?? null
+              const name = (snapshot?.name as string) || item.product?.name || 'Deleted Product'
+              const imageUrl = item.product?.images[0]?.url ?? null
 
               return (
                 <div key={item.id.toString()} className="flex gap-4">

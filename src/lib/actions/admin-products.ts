@@ -198,16 +198,15 @@ export async function updateProduct(id: number, data: ProductInput) {
 
 // ─── Delete Product ─────────────────────────────────────────────────────────
 
-export async function deleteProduct(id: number) {
+export async function deleteProduct(id: number, force = false) {
   await requireAdmin()
 
-  // Check if product has order items (can't delete due to Restrict constraint)
   const orderItemCount = await db.orderItem.count({
     where: { productId: id },
   })
 
-  if (orderItemCount > 0) {
-    // Archive instead of delete for products with orders
+  if (orderItemCount > 0 && !force) {
+    // First attempt on a product with orders: archive it
     await db.product.update({
       where: { id },
       data: { status: 'ARCHIVED' },
@@ -217,7 +216,7 @@ export async function deleteProduct(id: number) {
     return {
       success: true,
       archived: true,
-      message: `Product has ${orderItemCount} order(s) and was archived instead of deleted.`,
+      message: `Product has ${orderItemCount} order(s) and was archived instead of deleted. You can force-delete it from the Archived tab.`,
     }
   }
 
@@ -226,6 +225,14 @@ export async function deleteProduct(id: number) {
     where: { productId: id },
     select: { url: true },
   })
+
+  // Nullify order item references (productSnapshot preserves the data)
+  if (orderItemCount > 0) {
+    await db.orderItem.updateMany({
+      where: { productId: id },
+      data: { productId: null },
+    })
+  }
 
   await db.product.delete({ where: { id } })
 
