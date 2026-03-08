@@ -63,7 +63,7 @@ export default async function CheckoutSuccessPage({
               asChild
               className="bg-rose text-white hover:bg-rose-dark font-semibold"
             >
-              <Link href="/account/orders">View Order</Link>
+              <Link href="/account">View Order</Link>
             </Button>
             <Button
               asChild
