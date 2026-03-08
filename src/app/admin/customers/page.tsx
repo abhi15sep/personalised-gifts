@@ -1,3 +1,5 @@
+export const dynamic = "force-dynamic"
+
 import {
   Card,
   CardContent,
@@ -12,67 +14,39 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table"
+import { Badge } from "@/components/ui/badge"
+import { db } from "@/lib/db"
+import { formatPrice, formatDate } from "@/lib/format"
 
-const customers = [
-  {
-    id: "1",
-    name: "Sarah Johnson",
-    email: "sarah@example.com",
-    orders: 8,
-    totalSpent: "\u00a3342.50",
-    joined: "2025-06-15",
-  },
-  {
-    id: "2",
-    name: "Michael Chen",
-    email: "michael@example.com",
-    orders: 3,
-    totalSpent: "\u00a3129.97",
-    joined: "2025-09-22",
-  },
-  {
-    id: "3",
-    name: "Emma Wilson",
-    email: "emma@example.com",
-    orders: 12,
-    totalSpent: "\u00a3587.40",
-    joined: "2025-03-10",
-  },
-  {
-    id: "4",
-    name: "James Brown",
-    email: "james@example.com",
-    orders: 1,
-    totalSpent: "\u00a319.99",
-    joined: "2026-02-01",
-  },
-  {
-    id: "5",
-    name: "Olivia Davis",
-    email: "olivia@example.com",
-    orders: 5,
-    totalSpent: "\u00a3245.00",
-    joined: "2025-11-08",
-  },
-  {
-    id: "6",
-    name: "William Taylor",
-    email: "william@example.com",
-    orders: 2,
-    totalSpent: "\u00a364.98",
-    joined: "2026-01-17",
-  },
-  {
-    id: "7",
-    name: "Sophie Martin",
-    email: "sophie@example.com",
-    orders: 6,
-    totalSpent: "\u00a3298.50",
-    joined: "2025-07-30",
-  },
-]
+async function getCustomers() {
+  const customers = await db.user.findMany({
+    orderBy: { createdAt: "desc" },
+    include: {
+      orders: {
+        select: {
+          totalAmount: true,
+        },
+      },
+    },
+  })
 
-export default function CustomersPage() {
+  return customers.map((customer) => ({
+    id: customer.id.toString(),
+    name: customer.name || "—",
+    email: customer.email,
+    role: customer.role,
+    orderCount: customer.orders.length,
+    totalSpent: customer.orders.reduce(
+      (sum, order) => sum + Number(order.totalAmount),
+      0
+    ),
+    joined: customer.createdAt,
+  }))
+}
+
+export default async function CustomersPage() {
+  const customers = await getCustomers()
+
   return (
     <div className="space-y-6">
       <div>
@@ -84,33 +58,48 @@ export default function CustomersPage() {
 
       <Card>
         <CardHeader>
-          <CardTitle>All Customers</CardTitle>
+          <CardTitle>All Customers ({customers.length})</CardTitle>
         </CardHeader>
         <CardContent>
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Name</TableHead>
-                <TableHead>Email</TableHead>
-                <TableHead>Orders</TableHead>
-                <TableHead>Total Spent</TableHead>
-                <TableHead>Joined</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {customers.map((customer) => (
-                <TableRow key={customer.id}>
-                  <TableCell className="font-medium">
-                    {customer.name}
-                  </TableCell>
-                  <TableCell>{customer.email}</TableCell>
-                  <TableCell>{customer.orders}</TableCell>
-                  <TableCell>{customer.totalSpent}</TableCell>
-                  <TableCell>{customer.joined}</TableCell>
+          {customers.length === 0 ? (
+            <p className="py-8 text-center text-sm text-muted-foreground">
+              No customers yet. Customers will appear here once they sign up.
+            </p>
+          ) : (
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Name</TableHead>
+                  <TableHead>Email</TableHead>
+                  <TableHead>Role</TableHead>
+                  <TableHead>Orders</TableHead>
+                  <TableHead>Total Spent</TableHead>
+                  <TableHead>Joined</TableHead>
                 </TableRow>
-              ))}
-            </TableBody>
-          </Table>
+              </TableHeader>
+              <TableBody>
+                {customers.map((customer) => (
+                  <TableRow key={customer.id}>
+                    <TableCell className="font-medium">
+                      {customer.name}
+                    </TableCell>
+                    <TableCell>{customer.email}</TableCell>
+                    <TableCell>
+                      <Badge
+                        variant={customer.role === "ADMIN" ? "default" : "secondary"}
+                        className="text-xs"
+                      >
+                        {customer.role}
+                      </Badge>
+                    </TableCell>
+                    <TableCell>{customer.orderCount}</TableCell>
+                    <TableCell>{formatPrice(customer.totalSpent)}</TableCell>
+                    <TableCell>{formatDate(customer.joined)}</TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          )}
         </CardContent>
       </Card>
     </div>
