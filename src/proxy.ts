@@ -4,7 +4,7 @@ import type { NextRequest } from 'next/server'
 const publishableKey = process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY
 const hasValidClerkKey = publishableKey && publishableKey.startsWith('pk_') && !publishableKey.includes('placeholder')
 
-export default async function middleware(req: NextRequest) {
+export default async function proxy(req: NextRequest) {
   if (hasValidClerkKey) {
     const { clerkMiddleware, createRouteMatcher } = await import('@clerk/nextjs/server')
     const isProtectedRoute = createRouteMatcher([
