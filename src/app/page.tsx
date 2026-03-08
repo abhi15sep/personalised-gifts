@@ -1,8 +1,11 @@
+export const dynamic = "force-dynamic"
+
 import Link from "next/link"
 import Image from "next/image"
 import { Heart, Truck, Flag, ArrowRight, ShieldCheck, RotateCcw, Package } from "lucide-react"
 import { Button } from "@/components/ui/button"
-import { OCCASIONS, OCCASION_IMAGES, PRODUCT_IMAGES, HERO_IMAGE } from "@/lib/constants"
+import { PRODUCT_IMAGES, HERO_IMAGE, DEFAULT_OCCASION_BANNER } from "@/lib/constants"
+import { getOccasions } from "@/lib/actions/products"
 
 const BESTSELLER_PRODUCTS = [
   { name: "Personalised Name Mug", price: "£14.99", slug: "personalised-name-mug" },
@@ -47,7 +50,8 @@ function ProductCard({ name, price, slug }: { name: string; price: string; slug:
   )
 }
 
-export default function HomePage() {
+export default async function HomePage() {
+  const occasions = await getOccasions()
   return (
     <div className="flex flex-col">
       {/* Hero Banner */}
@@ -79,8 +83,8 @@ export default function HomePage() {
             Shop by Occasion
           </h2>
           <div className="mt-10 grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-5">
-            {OCCASIONS.map((occasion) => {
-              const imgUrl = OCCASION_IMAGES[occasion.slug]
+            {occasions.map((occasion) => {
+              const imgUrl = occasion.bannerUrl || DEFAULT_OCCASION_BANNER
               return (
                 <Link
                   key={occasion.slug}

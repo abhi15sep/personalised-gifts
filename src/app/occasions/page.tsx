@@ -4,7 +4,7 @@ import Link from "next/link"
 import Image from "next/image"
 import type { Metadata } from "next"
 import { getOccasions } from "@/lib/actions/products"
-import { OCCASION_IMAGES } from "@/lib/constants"
+import { DEFAULT_OCCASION_BANNER } from "@/lib/constants"
 
 export const metadata: Metadata = {
   title: "Shop by Occasion",
@@ -30,7 +30,7 @@ export default async function OccasionsPage() {
 
         <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 md:gap-6">
           {occasions.map((occasion) => {
-            const imgUrl = occasion.bannerUrl || OCCASION_IMAGES[occasion.slug]
+            const imgUrl = occasion.bannerUrl || DEFAULT_OCCASION_BANNER
             return (
               <Link
                 key={occasion.slug}
