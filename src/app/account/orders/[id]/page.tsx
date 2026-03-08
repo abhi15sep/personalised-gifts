@@ -52,6 +52,9 @@ export default async function OrderDetailPage({
           },
         },
       },
+      events: {
+        orderBy: { createdAt: 'desc' },
+      },
     },
   })
 
@@ -134,6 +137,51 @@ export default async function OrderDetailPage({
             })}
           </CardContent>
         </Card>
+
+        {/* Order Timeline */}
+        {order.events.length > 0 && (
+          <Card className="lg:col-span-2">
+            <CardHeader>
+              <CardTitle className="text-base">Order Timeline</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-4">
+                {order.events.map((event) => (
+                  <div key={event.id} className="flex gap-3">
+                    <div className="flex flex-col items-center">
+                      <div className="size-3 rounded-full bg-primary mt-1" />
+                      <div className="w-px flex-1 bg-border" />
+                    </div>
+                    <div className="pb-4 flex-1">
+                      <div className="flex items-center gap-2">
+                        <Badge className={statusColors[event.status] || ""}>
+                          {event.status}
+                        </Badge>
+                        <span className="text-xs text-muted-foreground">
+                          {formatDate(event.createdAt)}
+                        </span>
+                      </div>
+                      {event.comment && (
+                        <p className="mt-1 text-sm text-muted-foreground">
+                          {event.comment}
+                        </p>
+                      )}
+                      {event.imageUrl && (
+                        <Image
+                          src={event.imageUrl}
+                          alt="Status update"
+                          width={200}
+                          height={150}
+                          className="mt-2 rounded-md object-cover"
+                        />
+                      )}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </CardContent>
+          </Card>
+        )}
 
         {/* Order Summary + Shipping */}
         <div className="space-y-6">

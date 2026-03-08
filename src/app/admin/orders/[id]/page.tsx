@@ -1,308 +1,265 @@
+import { notFound } from "next/navigation"
 import Link from "next/link"
+import Image from "next/image"
 import { ArrowLeft } from "lucide-react"
+import { getAdminOrder } from "@/lib/actions/admin-orders"
+import { formatPrice, formatDate } from "@/lib/format"
 import { Badge } from "@/components/ui/badge"
-import { Button } from "@/components/ui/button"
-import {
-  Card,
-  CardContent,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card"
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table"
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Separator } from "@/components/ui/separator"
+import { Button } from "@/components/ui/button"
+import { StatusUpdateForm } from "./status-form"
 
-const order = {
-  id: "ORD-001",
-  date: "1 March 2026",
-  status: "Processing",
-  customer: {
-    name: "Sarah Johnson",
-    email: "sarah@example.com",
-    phone: "+44 7700 900123",
-  },
-  shippingAddress: {
-    line1: "42 Oak Lane",
-    line2: "",
-    city: "London",
-    county: "Greater London",
-    postcode: "SW1A 1AA",
-    country: "United Kingdom",
-  },
-  items: [
-    {
-      id: "1",
-      name: "Personalised Wooden Chopping Board",
-      quantity: 1,
-      price: "\u00a334.99",
-      personalisation: {
-        name: "The Johnson Family",
-        font: "Script",
-      },
-    },
-    {
-      id: "2",
-      name: "Engraved Silver Necklace",
-      quantity: 1,
-      price: "\u00a345.00",
-      personalisation: {
-        text: "S + J",
-        style: "Classic",
-      },
-    },
-  ],
-  subtotal: "\u00a379.99",
-  shipping: "\u00a34.99",
-  total: "\u00a384.98",
-  paymentIntentId: "pi_3N8kQ2LkdIwHu7ix0abc1234",
-  fulfillmentStatus: "in_production",
+const statusColors: Record<string, string> = {
+  PENDING: "bg-orange-100 text-orange-800",
+  PAID: "bg-blue-100 text-blue-800",
+  PROCESSING: "bg-yellow-100 text-yellow-800",
+  SHIPPED: "bg-purple-100 text-purple-800",
+  DELIVERED: "bg-green-100 text-green-800",
+  CANCELLED: "bg-red-100 text-red-800",
+  REFUNDED: "bg-gray-100 text-gray-800",
 }
 
-const fulfillmentSteps = [
-  { key: "pending", label: "Pending" },
-  { key: "in_production", label: "In Production" },
-  { key: "quality_check", label: "Quality Check" },
-  { key: "complete", label: "Complete" },
-]
-
-function getStatusColor(status: string) {
-  switch (status) {
-    case "Pending":
-      return "bg-orange-100 text-orange-800 border-orange-200"
-    case "Paid":
-      return "bg-blue-100 text-blue-800 border-blue-200"
-    case "Processing":
-      return "bg-yellow-100 text-yellow-800 border-yellow-200"
-    case "Shipped":
-      return "bg-purple-100 text-purple-800 border-purple-200"
-    case "Delivered":
-      return "bg-green-100 text-green-800 border-green-200"
-    default:
-      return "bg-gray-100 text-gray-800 border-gray-200"
-  }
-}
-
-function getFulfillmentStepIndex(status: string) {
-  return fulfillmentSteps.findIndex((s) => s.key === status)
-}
-
-export default async function OrderDetailPage({
+export default async function AdminOrderDetailPage({
   params,
 }: {
   params: Promise<{ id: string }>
 }) {
   const { id } = await params
-  const currentStepIndex = getFulfillmentStepIndex(order.fulfillmentStatus)
+  const order = await getAdminOrder(id)
+
+  if (!order) notFound()
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center gap-4">
-        <Button variant="ghost" size="icon" asChild>
-          <Link href="/admin/orders">
-            <ArrowLeft className="size-4" />
-          </Link>
-        </Button>
-        <div className="flex-1">
-          <div className="flex items-center gap-3">
-            <h2 className="text-3xl font-bold tracking-tight">
-              Order {id}
-            </h2>
-            <Badge
-              variant="outline"
-              className={getStatusColor(order.status)}
-            >
-              {order.status}
-            </Badge>
-          </div>
-          <p className="text-muted-foreground">Placed on {order.date}</p>
+      <Button variant="ghost" size="sm" asChild>
+        <Link href="/admin/orders">
+          <ArrowLeft className="size-4 mr-1" />
+          Back to Orders
+        </Link>
+      </Button>
+
+      <div className="flex items-center justify-between">
+        <div>
+          <h2 className="text-2xl font-bold tracking-tight">
+            Order {order.orderNumber}
+          </h2>
+          <p className="text-sm text-muted-foreground">
+            Placed on {formatDate(order.createdAt)}
+          </p>
         </div>
+        <Badge className={statusColors[order.status] || ""}>
+          {order.status}
+        </Badge>
       </div>
 
       <div className="grid gap-6 lg:grid-cols-3">
-        <div className="space-y-6 lg:col-span-2">
+        {/* Left column: Items + Status Update + Timeline */}
+        <div className="lg:col-span-2 space-y-6">
+          {/* Order Items */}
           <Card>
             <CardHeader>
-              <CardTitle>Order Items</CardTitle>
+              <CardTitle className="text-base">Items</CardTitle>
             </CardHeader>
-            <CardContent>
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Preview</TableHead>
-                    <TableHead>Product</TableHead>
-                    <TableHead>Personalisation</TableHead>
-                    <TableHead>Qty</TableHead>
-                    <TableHead>Price</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {order.items.map((item) => (
-                    <TableRow key={item.id}>
-                      <TableCell>
-                        <div className="size-12 rounded-md bg-muted" />
-                      </TableCell>
-                      <TableCell className="font-medium">
-                        {item.name}
-                      </TableCell>
-                      <TableCell>
-                        <div className="space-y-1 text-sm">
-                          {Object.entries(item.personalisation).map(
-                            ([key, value]) => (
-                              <div key={key}>
-                                <span className="font-medium capitalize">
-                                  {key}:
-                                </span>{" "}
-                                {value}
-                              </div>
-                            )
-                          )}
-                        </div>
-                      </TableCell>
-                      <TableCell>{item.quantity}</TableCell>
-                      <TableCell>{item.price}</TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-              <Separator className="my-4" />
-              <div className="space-y-2 text-sm">
-                <div className="flex justify-between">
-                  <span className="text-muted-foreground">Subtotal</span>
-                  <span>{order.subtotal}</span>
+            <CardContent className="space-y-4">
+              {order.items.map((item) => (
+                <div key={item.id} className="flex gap-4">
+                  {item.imageUrl ? (
+                    <Image
+                      src={item.imageUrl}
+                      alt={item.name}
+                      width={64}
+                      height={64}
+                      className="size-16 rounded-md object-cover"
+                    />
+                  ) : (
+                    <div className="size-16 rounded-md bg-muted" />
+                  )}
+                  <div className="flex-1">
+                    <p className="text-sm font-medium">{item.name}</p>
+                    <p className="text-sm text-muted-foreground">
+                      Qty: {item.quantity}
+                    </p>
+                    {item.personalizationData && (
+                      <div className="mt-1 text-xs text-muted-foreground">
+                        {Object.entries(item.personalizationData).map(
+                          ([key, value]) => (
+                            <span key={key} className="mr-3">
+                              {key}: {value}
+                            </span>
+                          )
+                        )}
+                      </div>
+                    )}
+                  </div>
+                  <p className="text-sm font-medium">
+                    {formatPrice(item.unitPrice * item.quantity)}
+                  </p>
                 </div>
-                <div className="flex justify-between">
-                  <span className="text-muted-foreground">Shipping</span>
-                  <span>{order.shipping}</span>
-                </div>
-                <Separator />
-                <div className="flex justify-between font-bold text-base">
-                  <span>Total</span>
-                  <span>{order.total}</span>
-                </div>
-              </div>
+              ))}
             </CardContent>
           </Card>
 
+          {/* Status Update Form */}
+          <StatusUpdateForm orderId={order.id} currentStatus={order.status} />
+
+          {/* Timeline */}
           <Card>
             <CardHeader>
-              <CardTitle>Fulfillment Status</CardTitle>
+              <CardTitle className="text-base">Order Timeline</CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="flex items-center gap-2">
-                {fulfillmentSteps.map((step, index) => {
-                  const isActive = index <= currentStepIndex
-                  const isCurrent = index === currentStepIndex
-                  return (
-                    <div key={step.key} className="flex flex-1 flex-col items-center gap-2">
-                      <div
-                        className={`flex size-10 items-center justify-center rounded-full border-2 text-sm font-bold ${
-                          isActive
-                            ? "border-primary bg-primary text-primary-foreground"
-                            : "border-muted-foreground/30 text-muted-foreground"
-                        }`}
-                      >
-                        {index + 1}
+              {order.events.length === 0 ? (
+                <p className="text-sm text-muted-foreground">
+                  No status updates yet.
+                </p>
+              ) : (
+                <div className="space-y-4">
+                  {order.events.map((event) => (
+                    <div key={event.id} className="flex gap-3">
+                      <div className="flex flex-col items-center">
+                        <div className="size-3 rounded-full bg-primary mt-1" />
+                        <div className="w-px flex-1 bg-border" />
                       </div>
-                      <span
-                        className={`text-xs text-center ${
-                          isCurrent
-                            ? "font-bold text-primary"
-                            : isActive
-                              ? "font-medium text-foreground"
-                              : "text-muted-foreground"
-                        }`}
-                      >
-                        {step.label}
-                      </span>
+                      <div className="pb-4 flex-1">
+                        <div className="flex items-center gap-2">
+                          <Badge
+                            variant="outline"
+                            className={statusColors[event.status] || ""}
+                          >
+                            {event.status}
+                          </Badge>
+                          <span className="text-xs text-muted-foreground">
+                            {formatDate(event.createdAt)}
+                          </span>
+                        </div>
+                        {event.comment && (
+                          <p className="mt-1 text-sm text-muted-foreground">
+                            {event.comment}
+                          </p>
+                        )}
+                        {event.imageUrl && (
+                          <Image
+                            src={event.imageUrl}
+                            alt="Event attachment"
+                            width={200}
+                            height={150}
+                            className="mt-2 rounded-md object-cover"
+                          />
+                        )}
+                      </div>
                     </div>
-                  )
-                })}
-              </div>
-              <div className="mt-6 flex justify-center gap-3">
-                {currentStepIndex < fulfillmentSteps.length - 1 && (
-                  <Button>
-                    Move to{" "}
-                    {fulfillmentSteps[currentStepIndex + 1].label}
-                  </Button>
-                )}
-                {currentStepIndex > 0 && (
-                  <Button variant="outline">
-                    Back to{" "}
-                    {fulfillmentSteps[currentStepIndex - 1].label}
-                  </Button>
-                )}
-              </div>
+                  ))}
+                </div>
+              )}
             </CardContent>
           </Card>
         </div>
 
+        {/* Right column: Summary, Customer, Shipping */}
         <div className="space-y-6">
           <Card>
             <CardHeader>
-              <CardTitle>Customer</CardTitle>
+              <CardTitle className="text-base">Order Summary</CardTitle>
             </CardHeader>
             <CardContent className="space-y-2 text-sm">
-              <div className="font-medium">{order.customer.name}</div>
-              <div className="text-muted-foreground">
-                {order.customer.email}
+              <div className="flex justify-between">
+                <span className="text-muted-foreground">Subtotal</span>
+                <span>{formatPrice(order.subtotal)}</span>
               </div>
-              <div className="text-muted-foreground">
-                {order.customer.phone}
+              <div className="flex justify-between">
+                <span className="text-muted-foreground">Shipping</span>
+                <span>
+                  {order.shippingAmount === 0
+                    ? "Free"
+                    : formatPrice(order.shippingAmount)}
+                </span>
               </div>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader>
-              <CardTitle>Shipping Address</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-1 text-sm">
-              <div>{order.shippingAddress.line1}</div>
-              {order.shippingAddress.line2 && (
-                <div>{order.shippingAddress.line2}</div>
+              {order.giftWrapAmount > 0 && (
+                <div className="flex justify-between">
+                  <span className="text-muted-foreground">Gift Wrap</span>
+                  <span>{formatPrice(order.giftWrapAmount)}</span>
+                </div>
               )}
-              <div>{order.shippingAddress.city}</div>
-              <div>{order.shippingAddress.county}</div>
-              <div>{order.shippingAddress.postcode}</div>
-              <div>{order.shippingAddress.country}</div>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader>
-              <CardTitle>Payment</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-2 text-sm">
-              <div className="flex justify-between">
-                <span className="text-muted-foreground">Status</span>
-                <Badge
-                  variant="outline"
-                  className="bg-green-100 text-green-800 border-green-200"
-                >
-                  Paid
-                </Badge>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-muted-foreground">Amount</span>
-                <span className="font-medium">{order.total}</span>
+              {order.discountAmount > 0 && (
+                <div className="flex justify-between">
+                  <span className="text-muted-foreground">Discount</span>
+                  <span className="text-green-600">
+                    -{formatPrice(order.discountAmount)}
+                  </span>
+                </div>
+              )}
+              <Separator />
+              <div className="flex justify-between font-semibold">
+                <span>Total</span>
+                <span>{formatPrice(order.totalAmount)}</span>
               </div>
               <Separator />
-              <div>
-                <span className="text-muted-foreground">
-                  Stripe Payment Intent
-                </span>
-                <div className="mt-1 rounded-md bg-muted px-2 py-1 font-mono text-xs break-all">
-                  {order.paymentIntentId}
-                </div>
+              <div className="flex justify-between">
+                <span className="text-muted-foreground">Payment</span>
+                <span className="capitalize">{order.paymentMethod}</span>
               </div>
             </CardContent>
           </Card>
+
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-base">Customer</CardTitle>
+            </CardHeader>
+            <CardContent className="text-sm space-y-1">
+              <p className="font-medium">{order.customer.name}</p>
+              <p className="text-muted-foreground">{order.customer.email}</p>
+              {order.customer.phone && (
+                <p className="text-muted-foreground">{order.customer.phone}</p>
+              )}
+            </CardContent>
+          </Card>
+
+          {order.shippingAddress && (
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-base">Shipping Address</CardTitle>
+              </CardHeader>
+              <CardContent className="text-sm text-muted-foreground">
+                <p className="font-medium text-foreground">
+                  {order.shippingAddress.fullName || order.shippingAddress.name}
+                </p>
+                <p>{order.shippingAddress.line1}</p>
+                {order.shippingAddress.line2 && (
+                  <p>{order.shippingAddress.line2}</p>
+                )}
+                <p>
+                  {order.shippingAddress.city}
+                  {order.shippingAddress.county
+                    ? `, ${order.shippingAddress.county}`
+                    : ""}
+                </p>
+                <p>{order.shippingAddress.postalCode}</p>
+              </CardContent>
+            </Card>
+          )}
+
+          {order.isGift && order.giftMessage && (
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-base">Gift Message</CardTitle>
+              </CardHeader>
+              <CardContent className="text-sm text-muted-foreground italic">
+                &quot;{order.giftMessage}&quot;
+              </CardContent>
+            </Card>
+          )}
+
+          {order.notes && (
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-base">Order Notes</CardTitle>
+              </CardHeader>
+              <CardContent className="text-sm text-muted-foreground">
+                {order.notes}
+              </CardContent>
+            </Card>
+          )}
         </div>
       </div>
     </div>

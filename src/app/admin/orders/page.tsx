@@ -21,91 +21,38 @@ import {
   TabsList,
   TabsTrigger,
 } from "@/components/ui/tabs"
+import { getAdminOrders } from "@/lib/actions/admin-orders"
+import { formatPrice, formatDate } from "@/lib/format"
+import { OrderStatus } from "@prisma/client"
 
-const orders = [
-  {
-    id: "ORD-001",
-    customer: "Sarah Johnson",
-    email: "sarah@example.com",
-    items: 2,
-    total: "\u00a345.99",
-    status: "Paid",
-    date: "2026-03-01",
-  },
-  {
-    id: "ORD-002",
-    customer: "Michael Chen",
-    email: "michael@example.com",
-    items: 1,
-    total: "\u00a329.99",
-    status: "Processing",
-    date: "2026-03-01",
-  },
-  {
-    id: "ORD-003",
-    customer: "Emma Wilson",
-    email: "emma@example.com",
-    items: 3,
-    total: "\u00a387.50",
-    status: "Shipped",
-    date: "2026-02-28",
-  },
-  {
-    id: "ORD-004",
-    customer: "James Brown",
-    email: "james@example.com",
-    items: 1,
-    total: "\u00a319.99",
-    status: "Delivered",
-    date: "2026-02-28",
-  },
-  {
-    id: "ORD-005",
-    customer: "Olivia Davis",
-    email: "olivia@example.com",
-    items: 4,
-    total: "\u00a3112.00",
-    status: "Pending",
-    date: "2026-02-27",
-  },
-  {
-    id: "ORD-006",
-    customer: "William Taylor",
-    email: "william@example.com",
-    items: 2,
-    total: "\u00a364.98",
-    status: "Paid",
-    date: "2026-02-27",
-  },
-  {
-    id: "ORD-007",
-    customer: "Sophie Martin",
-    email: "sophie@example.com",
-    items: 1,
-    total: "\u00a334.99",
-    status: "Processing",
-    date: "2026-02-26",
-  },
-]
-
-function getStatusColor(status: string) {
-  switch (status) {
-    case "Pending":
-      return "bg-orange-100 text-orange-800 border-orange-200"
-    case "Paid":
-      return "bg-blue-100 text-blue-800 border-blue-200"
-    case "Processing":
-      return "bg-yellow-100 text-yellow-800 border-yellow-200"
-    case "Shipped":
-      return "bg-purple-100 text-purple-800 border-purple-200"
-    case "Delivered":
-      return "bg-green-100 text-green-800 border-green-200"
-    default:
-      return "bg-gray-100 text-gray-800 border-gray-200"
-  }
+const statusColors: Record<string, string> = {
+  PENDING: "bg-orange-100 text-orange-800 border-orange-200",
+  PAID: "bg-blue-100 text-blue-800 border-blue-200",
+  PROCESSING: "bg-yellow-100 text-yellow-800 border-yellow-200",
+  SHIPPED: "bg-purple-100 text-purple-800 border-purple-200",
+  DELIVERED: "bg-green-100 text-green-800 border-green-200",
+  CANCELLED: "bg-red-100 text-red-800 border-red-200",
+  REFUNDED: "bg-gray-100 text-gray-800 border-gray-200",
 }
 
-function OrdersTable({ filteredOrders }: { filteredOrders: typeof orders }) {
+type OrderRow = {
+  id: string
+  orderNumber: string
+  customer: string
+  email: string
+  items: number
+  total: number
+  status: OrderStatus
+  date: Date
+}
+
+function OrdersTable({ filteredOrders }: { filteredOrders: OrderRow[] }) {
+  if (filteredOrders.length === 0) {
+    return (
+      <p className="py-8 text-center text-muted-foreground">No orders found.</p>
+    )
+  }
+
   return (
     <Table>
       <TableHeader>
@@ -122,7 +69,7 @@ function OrdersTable({ filteredOrders }: { filteredOrders: typeof orders }) {
       <TableBody>
         {filteredOrders.map((order) => (
           <TableRow key={order.id}>
-            <TableCell className="font-medium">{order.id}</TableCell>
+            <TableCell className="font-medium">{order.orderNumber}</TableCell>
             <TableCell>
               <div>
                 <div className="font-medium">{order.customer}</div>
@@ -132,16 +79,16 @@ function OrdersTable({ filteredOrders }: { filteredOrders: typeof orders }) {
               </div>
             </TableCell>
             <TableCell>{order.items}</TableCell>
-            <TableCell>{order.total}</TableCell>
+            <TableCell>{formatPrice(order.total)}</TableCell>
             <TableCell>
               <Badge
                 variant="outline"
-                className={getStatusColor(order.status)}
+                className={statusColors[order.status] || ""}
               >
                 {order.status}
               </Badge>
             </TableCell>
-            <TableCell>{order.date}</TableCell>
+            <TableCell>{formatDate(order.date)}</TableCell>
             <TableCell>
               <Button variant="ghost" size="sm" asChild>
                 <Link href={`/admin/orders/${order.id}`}>View</Link>
@@ -154,7 +101,12 @@ function OrdersTable({ filteredOrders }: { filteredOrders: typeof orders }) {
   )
 }
 
-export default function OrdersPage() {
+export default async function OrdersPage() {
+  const { orders } = await getAdminOrders()
+
+  const filterByStatus = (status: OrderStatus) =>
+    orders.filter((o) => o.status === status)
+
   return (
     <div className="space-y-6">
       <div>
@@ -166,7 +118,7 @@ export default function OrdersPage() {
 
       <Card>
         <CardHeader>
-          <CardTitle>All Orders</CardTitle>
+          <CardTitle>All Orders ({orders.length})</CardTitle>
         </CardHeader>
         <CardContent>
           <Tabs defaultValue="all">
@@ -182,29 +134,19 @@ export default function OrdersPage() {
               <OrdersTable filteredOrders={orders} />
             </TabsContent>
             <TabsContent value="pending" className="mt-4">
-              <OrdersTable
-                filteredOrders={orders.filter((o) => o.status === "Pending")}
-              />
+              <OrdersTable filteredOrders={filterByStatus("PENDING")} />
             </TabsContent>
             <TabsContent value="paid" className="mt-4">
-              <OrdersTable
-                filteredOrders={orders.filter((o) => o.status === "Paid")}
-              />
+              <OrdersTable filteredOrders={filterByStatus("PAID")} />
             </TabsContent>
             <TabsContent value="processing" className="mt-4">
-              <OrdersTable
-                filteredOrders={orders.filter((o) => o.status === "Processing")}
-              />
+              <OrdersTable filteredOrders={filterByStatus("PROCESSING")} />
             </TabsContent>
             <TabsContent value="shipped" className="mt-4">
-              <OrdersTable
-                filteredOrders={orders.filter((o) => o.status === "Shipped")}
-              />
+              <OrdersTable filteredOrders={filterByStatus("SHIPPED")} />
             </TabsContent>
             <TabsContent value="delivered" className="mt-4">
-              <OrdersTable
-                filteredOrders={orders.filter((o) => o.status === "Delivered")}
-              />
+              <OrdersTable filteredOrders={filterByStatus("DELIVERED")} />
             </TabsContent>
           </Tabs>
         </CardContent>
