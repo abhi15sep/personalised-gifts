@@ -5,6 +5,7 @@ import { getDeliveryEstimate } from "@/lib/format"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
 import { Separator } from "@/components/ui/separator"
+import { ClearCart } from "@/components/checkout/clear-cart"
 
 export default async function CheckoutSuccessPage({
   searchParams,
@@ -17,6 +18,7 @@ export default async function CheckoutSuccessPage({
 
   return (
     <div className="mx-auto max-w-2xl px-4 py-16 sm:px-6 lg:px-8">
+      <ClearCart />
       <Card className="border-gray-200 bg-white text-center">
         <CardContent className="p-8 sm:p-12">
           {/* Checkmark Icon */}
