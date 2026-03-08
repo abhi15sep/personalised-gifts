@@ -199,6 +199,7 @@ export async function refundOrder(
       currency: true,
       paymentMethod: true,
       stripePaymentIntentId: true,
+      stripeCheckoutSessionId: true,
     },
   })
 
@@ -223,11 +224,37 @@ export async function refundOrder(
 
   const isFullRefund = refundAmount === totalAmount
 
-  // Process refund via payment provider
-  if (order.paymentMethod === 'stripe' && order.stripePaymentIntentId) {
+  // Process refund via Stripe
+  if (order.paymentMethod === 'stripe') {
+    let paymentIntentId = order.stripePaymentIntentId
+
+    // If payment intent ID is missing, retrieve it from the checkout session
+    if (!paymentIntentId && order.stripeCheckoutSessionId) {
+      try {
+        const session = await stripe.checkout.sessions.retrieve(order.stripeCheckoutSessionId)
+        paymentIntentId = typeof session.payment_intent === 'string'
+          ? session.payment_intent
+          : session.payment_intent?.id ?? null
+
+        // Save it for future use
+        if (paymentIntentId) {
+          await db.order.update({
+            where: { id },
+            data: { stripePaymentIntentId: paymentIntentId },
+          })
+        }
+      } catch {
+        return { success: false, error: 'Failed to retrieve payment details from Stripe' }
+      }
+    }
+
+    if (!paymentIntentId) {
+      return { success: false, error: 'No Stripe payment found for this order. Cannot process refund.' }
+    }
+
     try {
       await stripe.refunds.create({
-        payment_intent: order.stripePaymentIntentId,
+        payment_intent: paymentIntentId,
         amount: Math.round(refundAmount * 100), // convert pounds to pence
         reason: 'requested_by_customer',
       })
@@ -235,9 +262,6 @@ export async function refundOrder(
       const message = err instanceof Error ? err.message : 'Stripe refund failed'
       return { success: false, error: message }
     }
-  } else if (order.paymentMethod === 'phonepe') {
-    // PhonePe refunds need to be processed manually or via their API
-    // For now, log the refund and let admin handle it manually
   }
 
   const refundComment = isFullRefund

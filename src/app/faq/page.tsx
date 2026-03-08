@@ -35,7 +35,7 @@ const faqs = [
   {
     question: "What payment methods do you accept?",
     answer:
-      "We accept all major credit and debit cards (Visa, Mastercard, American Express) via Stripe. We also offer UPI, wallets, and card payments in INR via PhonePe for our Indian customers.",
+      "We accept all major credit and debit cards (Visa, Mastercard, American Express) via our secure Stripe payment gateway.",
   },
   {
     question: "Can I send a gift directly to someone?",

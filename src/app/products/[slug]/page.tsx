@@ -22,6 +22,7 @@ import {
   TabsList,
   TabsTrigger,
 } from "@/components/ui/tabs"
+import { ImageGallery } from "@/components/product/image-gallery"
 import { AddToCart } from "@/components/product/add-to-cart"
 import { ProductCard } from "@/components/product/product-card"
 import { ReviewForm } from "@/components/product/review-form"
@@ -122,54 +123,17 @@ export default async function ProductDetailPage({ params }: PageProps) {
       {/* Product Detail - Two Column Layout */}
       <div className="grid gap-8 lg:grid-cols-2 lg:gap-12">
         {/* Left: Images */}
-        <div>
-          {/* Main Image */}
-          <div className="relative aspect-square overflow-hidden rounded-xl bg-gray-100">
-            {product.isPersonalizable && (
-              <Badge className="absolute left-3 top-3 z-10 bg-rose text-white border-0 text-xs font-semibold uppercase tracking-wide">
-                Personalise
-              </Badge>
-            )}
-            {primaryImageUrl ? (
-              <Image
-                src={primaryImageUrl}
-                alt={dbImages[0]?.altText || product.name}
-                fill
-                priority
-                sizes="(max-width: 1024px) 100vw, 50vw"
-                className="object-cover"
-              />
-            ) : (
-              <div className="flex h-full items-center justify-center text-muted-foreground">
-                No image
-              </div>
-            )}
-          </div>
-
-          {/* Thumbnail Strip */}
-          {dbImages.length > 1 && (
-            <div className="mt-4 flex gap-3">
-              {dbImages.map((img, i) => (
-                <div
-                  key={img.id}
-                  className={`relative aspect-square w-20 overflow-hidden rounded-lg border-2 transition-colors ${
-                    i === 0
-                      ? "border-rose"
-                      : "border-gray-200 hover:border-gray-400"
-                  } bg-gray-100`}
-                >
-                  <Image
-                    src={img.url}
-                    alt={img.altText || `${product.name} view ${i + 1}`}
-                    fill
-                    sizes="80px"
-                    className="object-cover"
-                  />
-                </div>
-              ))}
-            </div>
-          )}
-        </div>
+        <ImageGallery
+          images={
+            dbImages.length > 0
+              ? dbImages.map((img) => ({ id: img.id, url: img.url, altText: img.altText }))
+              : fallbackUrl
+                ? [{ id: 0, url: fallbackUrl, altText: product.name }]
+                : []
+          }
+          productName={product.name}
+          isPersonalizable={product.isPersonalizable}
+        />
 
         {/* Right: Details */}
         <div>

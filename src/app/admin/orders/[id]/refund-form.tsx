@@ -90,14 +90,6 @@ export function RefundForm({
         </CardTitle>
       </CardHeader>
       <CardContent className="space-y-4">
-        {paymentMethod === "phonepe" && (
-          <div className="rounded-md border border-yellow-300 bg-yellow-50 p-3 text-sm text-yellow-800">
-            PhonePe refunds must be processed manually via the PhonePe
-            dashboard. This form will update the order status and record the
-            refund.
-          </div>
-        )}
-
         {paymentMethod === "stripe" && !hasStripePaymentIntent && (
           <div className="rounded-md border border-yellow-300 bg-yellow-50 p-3 text-sm text-yellow-800">
             No Stripe payment intent found for this order. The refund will be
