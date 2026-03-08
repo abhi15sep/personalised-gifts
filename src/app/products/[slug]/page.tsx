@@ -24,6 +24,7 @@ import {
 } from "@/components/ui/tabs"
 import { AddToCart } from "@/components/product/add-to-cart"
 import { ProductCard } from "@/components/product/product-card"
+import { ReviewForm } from "@/components/product/review-form"
 
 function StarRating({ rating, count }: { rating: number; count: number }) {
   return (
@@ -281,8 +282,11 @@ export default async function ProductDetailPage({ params }: PageProps) {
                   ))}
                 </>
               ) : (
-                <p className="text-sm text-gray-500">No reviews yet. Be the first to review this product!</p>
+                <p className="text-sm text-gray-500 mb-4">No reviews yet. Be the first to review this product!</p>
               )}
+              <div className="mt-6">
+                <ReviewForm productId={product.id} />
+              </div>
             </div>
           </TabsContent>
         </Tabs>
