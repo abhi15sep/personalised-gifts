@@ -187,11 +187,11 @@ export default async function ProductDetailPage({ params }: PageProps) {
           {/* Price */}
           <div className="mt-4 flex items-baseline gap-3">
             <span className="text-2xl font-bold text-charcoal">
-              From {formatPrice(Number(product.basePrice) / 100)}
+              From {formatPrice(Number(product.basePrice))}
             </span>
             {product.compareAtPrice && Number(product.compareAtPrice) > Number(product.basePrice) && (
               <span className="text-lg text-gray-400 line-through">
-                {formatPrice(Number(product.compareAtPrice) / 100)}
+                {formatPrice(Number(product.compareAtPrice))}
               </span>
             )}
           </div>

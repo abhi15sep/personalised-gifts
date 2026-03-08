@@ -48,8 +48,8 @@ export default async function ProductsPage({ searchParams }: ProductsPageProps) 
   const params = await searchParams
   const page = Number(params.page) || 1
   const sortBy = (params.sort as 'newest' | 'price-asc' | 'price-desc' | 'name') || 'newest'
-  const priceMin = params.priceMin ? Number(params.priceMin) * 100 : undefined
-  const priceMax = params.priceMax ? Number(params.priceMax) * 100 : undefined
+  const priceMin = params.priceMin ? Number(params.priceMin) : undefined
+  const priceMax = params.priceMax ? Number(params.priceMax) : undefined
 
   const [{ products, totalCount, totalPages }, categories, occasions] = await Promise.all([
     getProducts({

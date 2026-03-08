@@ -128,8 +128,8 @@ export function AddToCart({
       productId,
       name,
       slug,
-      price: price / 100,
-      personalizationPrice: personalizationPrice / 100,
+      price,
+      personalizationPrice,
       quantity,
       imageUrl: imageUrl || "",
       personalization: isPersonalizable && Object.keys(personalization).length > 0 ? personalization : undefined,
@@ -152,7 +152,7 @@ export function AddToCart({
     })
   }
 
-  const totalUnitPrice = (price + personalizationPrice) / 100
+  const totalUnitPrice = price + personalizationPrice
 
   return (
     <>
@@ -202,7 +202,7 @@ export function AddToCart({
                     {opt.isRequired && <span className="text-rose ml-0.5">*</span>}
                     {opt.priceModifier > 0 && (
                       <span className="ml-1 text-xs text-gray-400">
-                        (+{formatPrice(opt.priceModifier / 100)})
+                        (+{formatPrice(opt.priceModifier)})
                       </span>
                     )}
                   </Label>
