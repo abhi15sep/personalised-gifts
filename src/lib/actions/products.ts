@@ -201,15 +201,21 @@ export async function searchProducts(query: string) {
   return products
 }
 
-export async function getCategories() {
+export async function getCategories({ withProducts = false } = {}) {
   const categories = await db.category.findMany({
+    where: withProducts
+      ? { products: { some: { status: 'ACTIVE' } } }
+      : undefined,
     orderBy: { name: 'asc' },
   })
   return categories
 }
 
-export async function getOccasions() {
+export async function getOccasions({ withProducts = false } = {}) {
   const occasions = await db.occasion.findMany({
+    where: withProducts
+      ? { products: { some: { product: { status: 'ACTIVE' } } } }
+      : undefined,
     orderBy: { name: 'asc' },
   })
   return occasions

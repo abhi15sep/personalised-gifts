@@ -61,8 +61,8 @@ export default async function ProductsPage({ searchParams }: ProductsPageProps) 
       priceMax,
       search: params.search,
     }),
-    getCategories(),
-    getOccasions(),
+    getCategories({ withProducts: true }),
+    getOccasions({ withProducts: true }),
   ])
 
   function buildPageUrl(pageNum: number) {

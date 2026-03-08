@@ -13,7 +13,7 @@ export const metadata: Metadata = {
 }
 
 export default async function OccasionsPage() {
-  const occasions = await getOccasions()
+  const occasions = await getOccasions({ withProducts: true })
 
   return (
     <div className="px-4 py-10 md:py-16">

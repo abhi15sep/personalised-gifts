@@ -10,7 +10,7 @@ import { ProductCard } from "@/components/product/product-card"
 
 export default async function HomePage() {
   const [occasions, { products: newestProducts }] = await Promise.all([
-    getOccasions(),
+    getOccasions({ withProducts: true }),
     getProducts({ limit: 8, sortBy: 'newest' }),
   ])
   return (
