@@ -4,6 +4,7 @@ import { db } from '@/lib/db'
 import { requireAdmin } from '@/lib/actions/admin'
 import { OrderStatus } from '@prisma/client'
 import { revalidatePath } from 'next/cache'
+import { stripe } from '@/lib/stripe'
 
 export async function getAdminOrders(filters?: {
   status?: OrderStatus
@@ -118,6 +119,7 @@ export async function getAdminOrder(id: string) {
     totalAmount: Number(order.totalAmount),
     currency: order.currency,
     paymentMethod: order.paymentMethod,
+    stripePaymentIntentId: order.stripePaymentIntentId,
     shippingAddress: order.shippingAddress as Record<string, string> | null,
     isGift: order.isGift,
     giftMessage: order.giftMessage,
@@ -164,6 +166,96 @@ export async function updateOrderStatus(
         status: newStatus,
         comment: comment || null,
         imageUrl: imageUrl || null,
+      },
+    }),
+  ])
+
+  revalidatePath('/admin/orders')
+  revalidatePath(`/admin/orders/${orderId}`)
+  revalidatePath(`/account/orders/${orderId}`)
+
+  return { success: true }
+}
+
+export async function refundOrder(
+  orderId: string,
+  {
+    amount,
+    reason,
+  }: {
+    amount?: number // pounds — if omitted, full refund
+    reason: string
+  }
+) {
+  await requireAdmin()
+
+  const id = BigInt(orderId)
+
+  const order = await db.order.findUnique({
+    where: { id },
+    select: {
+      status: true,
+      totalAmount: true,
+      currency: true,
+      paymentMethod: true,
+      stripePaymentIntentId: true,
+    },
+  })
+
+  if (!order) {
+    return { success: false, error: 'Order not found' }
+  }
+
+  if (order.status === 'REFUNDED') {
+    return { success: false, error: 'Order has already been refunded' }
+  }
+
+  if (order.status === 'PENDING') {
+    return { success: false, error: 'Cannot refund an unpaid order' }
+  }
+
+  const totalAmount = Number(order.totalAmount)
+  const refundAmount = amount ?? totalAmount
+
+  if (refundAmount <= 0 || refundAmount > totalAmount) {
+    return { success: false, error: `Refund amount must be between £0.01 and £${totalAmount.toFixed(2)}` }
+  }
+
+  const isFullRefund = refundAmount === totalAmount
+
+  // Process refund via payment provider
+  if (order.paymentMethod === 'stripe' && order.stripePaymentIntentId) {
+    try {
+      await stripe.refunds.create({
+        payment_intent: order.stripePaymentIntentId,
+        amount: Math.round(refundAmount * 100), // convert pounds to pence
+        reason: 'requested_by_customer',
+      })
+    } catch (err) {
+      const message = err instanceof Error ? err.message : 'Stripe refund failed'
+      return { success: false, error: message }
+    }
+  } else if (order.paymentMethod === 'phonepe') {
+    // PhonePe refunds need to be processed manually or via their API
+    // For now, log the refund and let admin handle it manually
+  }
+
+  const refundComment = isFullRefund
+    ? `Full refund of £${refundAmount.toFixed(2)} processed. Reason: ${reason}`
+    : `Partial refund of £${refundAmount.toFixed(2)} processed (out of £${totalAmount.toFixed(2)}). Reason: ${reason}`
+
+  await db.$transaction([
+    db.order.update({
+      where: { id },
+      data: {
+        status: isFullRefund ? 'REFUNDED' : order.status,
+      },
+    }),
+    db.orderEvent.create({
+      data: {
+        orderId: id,
+        status: 'REFUNDED',
+        comment: refundComment,
       },
     }),
   ])

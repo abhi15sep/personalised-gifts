@@ -11,6 +11,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Separator } from "@/components/ui/separator"
 import { Button } from "@/components/ui/button"
 import { StatusUpdateForm } from "./status-form"
+import { RefundForm } from "./refund-form"
 
 const statusColors: Record<string, string> = {
   PENDING: "bg-orange-100 text-orange-800",
@@ -261,6 +262,15 @@ export default async function AdminOrderDetailPage({
                 {order.notes}
               </CardContent>
             </Card>
+          )}
+
+          {order.status !== "PENDING" && order.status !== "REFUNDED" && order.status !== "CANCELLED" && (
+            <RefundForm
+              orderId={order.id}
+              totalAmount={order.totalAmount}
+              paymentMethod={order.paymentMethod}
+              hasStripePaymentIntent={!!order.stripePaymentIntentId}
+            />
           )}
         </div>
       </div>
