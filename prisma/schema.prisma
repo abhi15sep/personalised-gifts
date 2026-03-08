@@ -246,6 +246,8 @@ model Order {
   stripeCheckoutSessionId String?
   phonepeOrderId          String?
   phonepeTransactionId    String?
+  tinkPaymentRequestId   String?
+  tinkTransferId         String?
   shippingAddress         Json?
   billingAddress          Json?
   isGift                  Boolean     @default(false)

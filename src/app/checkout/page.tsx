@@ -6,7 +6,7 @@ import Link from "next/link"
 import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { z } from "zod"
-import { Check, CreditCard, Loader2 } from "lucide-react"
+import { Check, CreditCard, Landmark, Loader2 } from "lucide-react"
 
 import { useCartStore } from "@/stores/cart-store"
 import { formatPrice } from "@/lib/format"
@@ -16,6 +16,7 @@ import {
   GIFT_WRAP_COST,
 } from "@/lib/constants"
 import { createCheckoutSession } from "@/lib/actions/checkout"
+import { createTinkCheckoutSession } from "@/lib/actions/tink-checkout"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Checkbox } from "@/components/ui/checkbox"
@@ -59,6 +60,7 @@ export default function CheckoutPage() {
   const [currentStep, setCurrentStep] = useState(1)
   const [isProcessing, setIsProcessing] = useState(false)
   const [shippingData, setShippingData] = useState<ShippingFormValues | null>(null)
+  const [paymentMethod, setPaymentMethod] = useState<'stripe' | 'tink'>('stripe')
   const {
     items,
     isGift,
@@ -125,13 +127,24 @@ export default function CheckoutPage() {
     }
 
     try {
-      const result = await createCheckoutSession(
-        checkoutItems,
-        address,
-        giftOpts
-      )
-      if (result.url) {
-        window.location.href = result.url
+      if (paymentMethod === 'tink') {
+        const result = await createTinkCheckoutSession(
+          checkoutItems,
+          address,
+          giftOpts
+        )
+        if (result.redirectUrl) {
+          window.location.href = result.redirectUrl
+        }
+      } else {
+        const result = await createCheckoutSession(
+          checkoutItems,
+          address,
+          giftOpts
+        )
+        if (result.url) {
+          window.location.href = result.url
+        }
       }
     } catch (error) {
       console.error("Payment error:", error)
@@ -472,19 +485,60 @@ export default function CheckoutPage() {
                 </CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
-                <div className="flex items-center gap-3 rounded-xl border-2 border-rose bg-rose/5 p-4">
-                  <div className="flex h-10 w-10 items-center justify-center rounded-full bg-rose text-white">
-                    <CreditCard className="h-5 w-5" />
-                  </div>
-                  <div>
-                    <p className="font-semibold text-charcoal">
-                      Card Payment
-                    </p>
-                    <p className="text-xs text-gray-400">
-                      Secure payment via Stripe
-                    </p>
-                  </div>
-                  <Check className="ml-auto h-5 w-5 text-rose" />
+                <div className="grid gap-3 sm:grid-cols-2">
+                  <button
+                    type="button"
+                    onClick={() => setPaymentMethod('stripe')}
+                    className={`flex items-center gap-3 rounded-xl p-4 text-left transition-colors ${
+                      paymentMethod === 'stripe'
+                        ? 'border-2 border-rose bg-rose/5'
+                        : 'border border-gray-200 cursor-pointer hover:border-gray-300'
+                    }`}
+                  >
+                    <div className={`flex h-10 w-10 items-center justify-center rounded-full ${
+                      paymentMethod === 'stripe' ? 'bg-rose text-white' : 'bg-gray-100 text-gray-500'
+                    }`}>
+                      <CreditCard className="h-5 w-5" />
+                    </div>
+                    <div className="flex-1">
+                      <p className="font-semibold text-charcoal">
+                        Card Payment
+                      </p>
+                      <p className="text-xs text-gray-400">
+                        Secure payment via Stripe
+                      </p>
+                    </div>
+                    {paymentMethod === 'stripe' && (
+                      <Check className="h-5 w-5 text-rose" />
+                    )}
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => setPaymentMethod('tink')}
+                    className={`flex items-center gap-3 rounded-xl p-4 text-left transition-colors ${
+                      paymentMethod === 'tink'
+                        ? 'border-2 border-rose bg-rose/5'
+                        : 'border border-gray-200 cursor-pointer hover:border-gray-300'
+                    }`}
+                  >
+                    <div className={`flex h-10 w-10 items-center justify-center rounded-full ${
+                      paymentMethod === 'tink' ? 'bg-rose text-white' : 'bg-gray-100 text-gray-500'
+                    }`}>
+                      <Landmark className="h-5 w-5" />
+                    </div>
+                    <div className="flex-1">
+                      <p className="font-semibold text-charcoal">
+                        Pay by Bank
+                      </p>
+                      <p className="text-xs text-gray-400">
+                        Pay directly from your bank account
+                      </p>
+                    </div>
+                    {paymentMethod === 'tink' && (
+                      <Check className="h-5 w-5 text-rose" />
+                    )}
+                  </button>
                 </div>
 
                 <Separator className="bg-gray-200" />
@@ -499,6 +553,8 @@ export default function CheckoutPage() {
                       <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                       Processing...
                     </>
+                  ) : paymentMethod === 'tink' ? (
+                    `Pay ${formatPrice(total)} via Bank`
                   ) : (
                     `Pay ${formatPrice(total)} with Card`
                   )}
