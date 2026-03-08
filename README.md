@@ -47,9 +47,16 @@ Open [http://localhost:3000](http://localhost:3000). The seed creates 8 categori
 ```
 src/
 ├── app/                    # Next.js App Router pages
-│   ├── admin/              # Admin dashboard (products, orders, customers)
+│   ├── admin/              # Admin dashboard, products CRUD, orders, customers
+│   │   ├── products/       # Product listing, create, edit (wired to DB)
+│   │   │   ├── new/        # Create product form
+│   │   │   └── [id]/edit/  # Edit product form
+│   │   ├── orders/         # Order listing + detail with fulfillment
+│   │   └── customers/      # Customer listing
 │   ├── account/            # User account (orders, wishlist, addresses)
-│   ├── api/webhooks/       # Stripe, Clerk & PhonePe webhook handlers
+│   ├── api/
+│   │   ├── upload/         # Cloudinary image upload endpoint (admin only)
+│   │   └── webhooks/       # Stripe, Clerk & PhonePe webhook handlers
 │   ├── cart/               # Shopping cart
 │   ├── checkout/           # Checkout flow + success + PhonePe return
 │   ├── category/[slug]/    # Category pages
@@ -60,11 +67,19 @@ src/
 │   ├── layout.tsx          # Root layout
 │   └── page.tsx            # Homepage
 ├── components/
+│   ├── admin/              # Admin components (ProductForm)
 │   ├── layout/             # Header, footer
 │   ├── product/            # Product card
 │   └── ui/                 # shadcn/ui components (56 components)
 ├── lib/
-│   ├── actions/            # Server actions (checkout, phonepe-checkout, products, user)
+│   ├── actions/
+│   │   ├── admin.ts        # Admin role guard (requireAdmin, isAdmin)
+│   │   ├── admin-products.ts # Product CRUD, dashboard stats
+│   │   ├── checkout.ts     # Stripe checkout
+│   │   ├── phonepe-checkout.ts # PhonePe checkout
+│   │   ├── products.ts     # Product queries (public)
+│   │   ├── user.ts         # User management, wishlist
+│   │   └── address.ts      # Address CRUD
 │   ├── db.ts               # Prisma client
 │   ├── stripe.ts           # Stripe server SDK
 │   ├── stripe-client.ts    # Stripe client SDK
@@ -80,6 +95,45 @@ prisma/
 ├── schema.prisma           # Database schema (15 tables)
 └── seed.ts                 # Seed data (25 products)
 ```
+
+---
+
+## Admin Panel
+
+The admin panel at `/admin` provides full product management with role-based access control. Only users with `role = ADMIN` in the database can access it — all other users are redirected to the homepage.
+
+### Setting Up Admin Access
+
+After creating your account (sign up via Clerk), promote yourself to admin:
+
+```bash
+# Option A: Via MySQL CLI
+mysql -u pgifts -p personalised_gifts
+UPDATE User SET role = 'ADMIN' WHERE email = 'your@email.com';
+
+# Option B: Via Prisma Studio (visual)
+npx prisma studio
+# Open the User table, find your user, change role from CUSTOMER to ADMIN
+```
+
+### Admin Features
+
+| Feature | Description |
+|---|---|
+| **Dashboard** | Real-time stats (revenue, orders, products, customers) + recent orders |
+| **Products Listing** | View all products with status filter (All/Active/Draft/Archived), search, pagination |
+| **Create Product** | Full form with image upload (Cloudinary), category/occasion selection, personalisation options |
+| **Edit Product** | Modify any product details, swap/reorder images, update personalisation options |
+| **Delete Product** | Delete with confirmation dialog, auto-cleans Cloudinary images |
+| **Image Upload** | Drag-and-drop or click, uploads to Cloudinary (PNG/JPG/WebP, max 5MB), set primary image |
+
+### Admin Architecture
+
+- **Role guard:** `src/lib/actions/admin.ts` — `requireAdmin()` checks Clerk auth + DB role
+- **Admin layout:** `src/app/admin/layout.tsx` — server-side redirect for non-admins
+- **Product CRUD:** `src/lib/actions/admin-products.ts` — all operations use Prisma transactions
+- **Image upload:** `src/app/api/upload/route.ts` — admin-only API route, uploads to Cloudinary
+- **Shared form:** `src/components/admin/product-form.tsx` — used by both create and edit pages
 
 ---
 

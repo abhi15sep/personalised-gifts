@@ -14,95 +14,54 @@ import {
   TableRow,
 } from "@/components/ui/table"
 import { Badge } from "@/components/ui/badge"
-
-const stats = [
-  {
-    title: "Total Revenue",
-    value: "\u00a312,845.00",
-    icon: PoundSterling,
-    description: "+18% from last month",
-  },
-  {
-    title: "Orders",
-    value: "284",
-    icon: ShoppingCart,
-    description: "+12% from last month",
-  },
-  {
-    title: "Products",
-    value: "64",
-    icon: Package,
-    description: "8 added this month",
-  },
-  {
-    title: "Customers",
-    value: "1,429",
-    icon: Users,
-    description: "+32 this week",
-  },
-]
-
-const recentOrders = [
-  {
-    id: "ORD-001",
-    customer: "Sarah Johnson",
-    items: 2,
-    total: "\u00a345.99",
-    status: "Paid",
-    date: "2026-03-01",
-  },
-  {
-    id: "ORD-002",
-    customer: "Michael Chen",
-    items: 1,
-    total: "\u00a329.99",
-    status: "Processing",
-    date: "2026-03-01",
-  },
-  {
-    id: "ORD-003",
-    customer: "Emma Wilson",
-    items: 3,
-    total: "\u00a387.50",
-    status: "Shipped",
-    date: "2026-02-28",
-  },
-  {
-    id: "ORD-004",
-    customer: "James Brown",
-    items: 1,
-    total: "\u00a319.99",
-    status: "Delivered",
-    date: "2026-02-28",
-  },
-  {
-    id: "ORD-005",
-    customer: "Olivia Davis",
-    items: 4,
-    total: "\u00a3112.00",
-    status: "Pending",
-    date: "2026-02-27",
-  },
-]
+import { getDashboardStats } from "@/lib/actions/admin-products"
 
 function getStatusColor(status: string) {
   switch (status) {
-    case "Paid":
+    case "PAID":
       return "bg-blue-100 text-blue-800 border-blue-200"
-    case "Processing":
+    case "PROCESSING":
       return "bg-yellow-100 text-yellow-800 border-yellow-200"
-    case "Shipped":
+    case "SHIPPED":
       return "bg-purple-100 text-purple-800 border-purple-200"
-    case "Delivered":
+    case "DELIVERED":
       return "bg-green-100 text-green-800 border-green-200"
-    case "Pending":
+    case "PENDING":
       return "bg-orange-100 text-orange-800 border-orange-200"
+    case "CANCELLED":
+    case "REFUNDED":
+      return "bg-red-100 text-red-800 border-red-200"
     default:
       return "bg-gray-100 text-gray-800 border-gray-200"
   }
 }
 
-export default function AdminDashboard() {
+export default async function AdminDashboard() {
+  const stats = await getDashboardStats()
+
+  const statCards = [
+    {
+      title: "Total Revenue",
+      value: `\u00a3${stats.totalRevenue.toLocaleString("en-GB", { minimumFractionDigits: 2 })}`,
+      icon: PoundSterling,
+    },
+    {
+      title: "Orders",
+      value: stats.orderCount.toLocaleString(),
+      icon: ShoppingCart,
+    },
+    {
+      title: "Products",
+      value: stats.productCount.toLocaleString(),
+      icon: Package,
+    },
+    {
+      title: "Customers",
+      value: stats.customerCount.toLocaleString(),
+      icon: Users,
+    },
+  ]
+
   return (
     <div className="space-y-8">
       <div>
@@ -113,7 +72,7 @@ export default function AdminDashboard() {
       </div>
 
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        {stats.map((stat) => {
+        {statCards.map((stat) => {
           const Icon = stat.icon
           return (
             <Card key={stat.title}>
@@ -125,9 +84,6 @@ export default function AdminDashboard() {
               </CardHeader>
               <CardContent>
                 <div className="text-2xl font-bold">{stat.value}</div>
-                <p className="text-xs text-muted-foreground">
-                  {stat.description}
-                </p>
               </CardContent>
             </Card>
           )
@@ -139,37 +95,45 @@ export default function AdminDashboard() {
           <CardTitle>Recent Orders</CardTitle>
         </CardHeader>
         <CardContent>
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Order</TableHead>
-                <TableHead>Customer</TableHead>
-                <TableHead>Items</TableHead>
-                <TableHead>Total</TableHead>
-                <TableHead>Status</TableHead>
-                <TableHead>Date</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {recentOrders.map((order) => (
-                <TableRow key={order.id}>
-                  <TableCell className="font-medium">{order.id}</TableCell>
-                  <TableCell>{order.customer}</TableCell>
-                  <TableCell>{order.items}</TableCell>
-                  <TableCell>{order.total}</TableCell>
-                  <TableCell>
-                    <Badge
-                      variant="outline"
-                      className={getStatusColor(order.status)}
-                    >
-                      {order.status}
-                    </Badge>
-                  </TableCell>
-                  <TableCell>{order.date}</TableCell>
+          {stats.recentOrders.length === 0 ? (
+            <p className="py-8 text-center text-sm text-muted-foreground">
+              No orders yet.
+            </p>
+          ) : (
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Order</TableHead>
+                  <TableHead>Customer</TableHead>
+                  <TableHead>Items</TableHead>
+                  <TableHead>Total</TableHead>
+                  <TableHead>Status</TableHead>
+                  <TableHead>Date</TableHead>
                 </TableRow>
-              ))}
-            </TableBody>
-          </Table>
+              </TableHeader>
+              <TableBody>
+                {stats.recentOrders.map((order) => (
+                  <TableRow key={order.id}>
+                    <TableCell className="font-medium">{order.id}</TableCell>
+                    <TableCell>{order.customer}</TableCell>
+                    <TableCell>{order.items}</TableCell>
+                    <TableCell>
+                      &pound;{order.total.toFixed(2)}
+                    </TableCell>
+                    <TableCell>
+                      <Badge
+                        variant="outline"
+                        className={getStatusColor(order.status)}
+                      >
+                        {order.status}
+                      </Badge>
+                    </TableCell>
+                    <TableCell>{order.date}</TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          )}
         </CardContent>
       </Card>
     </div>

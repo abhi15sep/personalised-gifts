@@ -1,5 +1,5 @@
 import Link from "next/link"
-import { Package, Heart, MapPin, Bell } from "lucide-react"
+import { Package, Heart, MapPin } from "lucide-react"
 
 export const dynamic = "force-dynamic"
 
@@ -7,7 +7,6 @@ const accountLinks = [
   { href: "/account", label: "My Orders", icon: Package },
   { href: "/account/wishlist", label: "Wishlist", icon: Heart },
   { href: "/account/addresses", label: "Addresses", icon: MapPin },
-  { href: "/account/reminders", label: "Occasion Reminders", icon: Bell },
 ]
 
 export default function AccountLayout({

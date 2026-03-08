@@ -1,5 +1,8 @@
 import Link from "next/link"
 import { LayoutDashboard, Package, ShoppingCart, Users } from "lucide-react"
+import { requireAdminOrRedirect } from "@/lib/actions/admin"
+
+export const dynamic = "force-dynamic"
 
 const sidebarLinks = [
   { href: "/admin", label: "Dashboard", icon: LayoutDashboard },
@@ -8,11 +11,13 @@ const sidebarLinks = [
   { href: "/admin/customers", label: "Customers", icon: Users },
 ]
 
-export default function AdminLayout({
+export default async function AdminLayout({
   children,
 }: {
   children: React.ReactNode
 }) {
+  await requireAdminOrRedirect()
+
   return (
     <div className="flex min-h-screen">
       <aside className="w-64 shrink-0 border-r bg-card">

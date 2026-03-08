@@ -1,26 +1,27 @@
+"use client"
+
+import { useState } from "react"
 import Link from "next/link"
 
 const aboutLinks = [
   { href: "/about", label: "Our Story" },
-  { href: "/how-it-works", label: "How It Works" },
-  { href: "/reviews", label: "Reviews" },
-  { href: "/blog", label: "Blog" },
+  { href: "/about", label: "How It Works" },
+  { href: "/faq", label: "FAQ" },
 ]
 
 const shopLinks = [
-  { href: "/shop", label: "All Gifts" },
+  { href: "/products", label: "All Gifts" },
   { href: "/occasions", label: "Occasions" },
-  { href: "/shop/bestsellers", label: "Bestsellers" },
-  { href: "/shop/new-arrivals", label: "New Arrivals" },
+  { href: "/products?sort=bestselling", label: "Bestsellers" },
+  { href: "/products?sort=newest", label: "New Arrivals" },
   { href: "/gift-finder", label: "Gift Finder" },
 ]
 
 const supportLinks = [
-  { href: "/help", label: "Help Centre" },
+  { href: "/faq", label: "Help Centre" },
   { href: "/shipping", label: "Shipping & Delivery" },
   { href: "/returns", label: "Returns & Refunds" },
   { href: "/contact", label: "Contact Us" },
-  { href: "/faq", label: "FAQ" },
 ]
 
 const socialLinks = [
@@ -31,6 +32,30 @@ const socialLinks = [
 ]
 
 export function SiteFooter() {
+  const [email, setEmail] = useState("")
+  const [status, setStatus] = useState<"idle" | "loading" | "success" | "error">("idle")
+
+  async function handleNewsletter(e: React.FormEvent) {
+    e.preventDefault()
+    if (!email.trim()) return
+    setStatus("loading")
+    try {
+      const res = await fetch("/api/newsletter", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email: email.trim() }),
+      })
+      if (res.ok) {
+        setStatus("success")
+        setEmail("")
+      } else {
+        setStatus("error")
+      }
+    } catch {
+      setStatus("error")
+    }
+  }
+
   return (
     <footer className="border-t border-gray-200 bg-charcoal text-gray-300">
       {/* Main Footer */}
@@ -43,7 +68,7 @@ export function SiteFooter() {
             </h3>
             <ul className="space-y-2.5">
               {aboutLinks.map((link) => (
-                <li key={link.href}>
+                <li key={link.label}>
                   <Link
                     href={link.href}
                     className="text-sm text-gray-400 transition-colors hover:text-white"
@@ -62,7 +87,7 @@ export function SiteFooter() {
             </h3>
             <ul className="space-y-2.5">
               {shopLinks.map((link) => (
-                <li key={link.href}>
+                <li key={link.label}>
                   <Link
                     href={link.href}
                     className="text-sm text-gray-400 transition-colors hover:text-white"
@@ -81,7 +106,7 @@ export function SiteFooter() {
             </h3>
             <ul className="space-y-2.5">
               {supportLinks.map((link) => (
-                <li key={link.href}>
+                <li key={link.label}>
                   <Link
                     href={link.href}
                     className="text-sm text-gray-400 transition-colors hover:text-white"
@@ -124,21 +149,34 @@ export function SiteFooter() {
             <p className="mt-1 text-sm text-gray-400">
               Subscribe for exclusive offers, gift ideas, and personalisation tips.
             </p>
-            <form className="mt-4 flex gap-2" action="/api/newsletter" method="POST">
-              <input
-                type="email"
-                name="email"
-                required
-                placeholder="Your email address"
-                className="flex-1 rounded-md border border-gray-600 bg-gray-800 px-3 py-2 text-sm text-white placeholder:text-gray-500 focus:border-rose focus:outline-none focus:ring-1 focus:ring-rose"
-              />
-              <button
-                type="submit"
-                className="rounded-md bg-rose px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-rose-dark"
-              >
-                Subscribe
-              </button>
-            </form>
+            {status === "success" ? (
+              <p className="mt-4 text-sm text-green-400 font-medium">
+                Thank you for subscribing!
+              </p>
+            ) : (
+              <form onSubmit={handleNewsletter} className="mt-4 flex gap-2">
+                <input
+                  type="email"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  required
+                  placeholder="Your email address"
+                  className="flex-1 rounded-md border border-gray-600 bg-gray-800 px-3 py-2 text-sm text-white placeholder:text-gray-500 focus:border-rose focus:outline-none focus:ring-1 focus:ring-rose"
+                />
+                <button
+                  type="submit"
+                  disabled={status === "loading"}
+                  className="rounded-md bg-rose px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-rose-dark disabled:opacity-50"
+                >
+                  {status === "loading" ? "..." : "Subscribe"}
+                </button>
+              </form>
+            )}
+            {status === "error" && (
+              <p className="mt-2 text-xs text-red-400">
+                Something went wrong. Please try again.
+              </p>
+            )}
           </div>
         </div>
       </div>
