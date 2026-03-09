@@ -25,6 +25,7 @@ interface Address {
   id: string
   label: string | null
   fullName: string
+  phone: string | null
   line1: string
   line2: string | null
   city: string
@@ -67,6 +68,7 @@ export default function AddressesPage() {
     const addressData = {
       label: (formData.get("label") as string) || null,
       fullName: formData.get("fullName") as string,
+      phone: (formData.get("phone") as string) || null,
       line1: formData.get("line1") as string,
       line2: (formData.get("line2") as string) || null,
       city: formData.get("city") as string,
@@ -156,6 +158,16 @@ export default function AddressesPage() {
                   placeholder="John Smith"
                   required
                   defaultValue={editingAddress?.fullName || ""}
+                />
+              </div>
+              <div>
+                <Label htmlFor="phone">Phone Number</Label>
+                <Input
+                  id="phone"
+                  name="phone"
+                  type="tel"
+                  placeholder="07700 900000"
+                  defaultValue={editingAddress?.phone || ""}
                 />
               </div>
               <div>
@@ -291,6 +303,7 @@ export default function AddressesPage() {
               </CardHeader>
               <CardContent className="text-sm text-muted-foreground">
                 <p>{address.fullName}</p>
+                {address.phone && <p>{address.phone}</p>}
                 <p>{address.line1}</p>
                 {address.line2 && <p>{address.line2}</p>}
                 <p>

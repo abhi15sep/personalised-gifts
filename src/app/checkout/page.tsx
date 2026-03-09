@@ -69,6 +69,7 @@ type SavedAddress = {
   id: bigint
   label: string | null
   fullName: string
+  phone: string | null
   line1: string
   line2: string | null
   city: string
@@ -132,7 +133,7 @@ export default function CheckoutPage() {
           form.reset({
             fullName: defaultAddr.fullName,
             email: user?.primaryEmailAddress?.emailAddress ?? "",
-            phone: user?.primaryPhoneNumber?.phoneNumber ?? "",
+            phone: defaultAddr.phone ?? user?.primaryPhoneNumber?.phoneNumber ?? "",
             addressLine1: defaultAddr.line1,
             addressLine2: defaultAddr.line2 ?? "",
             city: defaultAddr.city,
@@ -179,7 +180,7 @@ export default function CheckoutPage() {
       form.reset({
         fullName: addr.fullName,
         email: user?.primaryEmailAddress?.emailAddress ?? "",
-        phone: user?.primaryPhoneNumber?.phoneNumber ?? "",
+        phone: addr.phone ?? user?.primaryPhoneNumber?.phoneNumber ?? "",
         addressLine1: addr.line1,
         addressLine2: addr.line2 ?? "",
         city: addr.city,

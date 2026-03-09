@@ -35,6 +35,7 @@ export async function getUserAddresses() {
 export async function addAddress(data: {
   label: string | null
   fullName: string
+  phone: string | null
   line1: string
   line2: string | null
   city: string
@@ -58,6 +59,7 @@ export async function addAddress(data: {
       userId: user.id,
       label: data.label,
       fullName: data.fullName,
+      phone: data.phone,
       line1: data.line1,
       line2: data.line2,
       city: data.city,
@@ -76,6 +78,7 @@ export async function updateAddress(
   data: {
     label: string | null
     fullName: string
+    phone: string | null
     line1: string
     line2: string | null
     city: string
@@ -109,6 +112,7 @@ export async function updateAddress(
     data: {
       label: data.label,
       fullName: data.fullName,
+      phone: data.phone,
       line1: data.line1,
       line2: data.line2,
       city: data.city,
