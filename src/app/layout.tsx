@@ -5,6 +5,7 @@ import { Toaster } from "@/components/ui/sonner"
 import { SiteHeader } from "@/components/layout/site-header"
 import { SiteFooter } from "@/components/layout/site-footer"
 import { CookieConsent } from "@/components/cookie-consent"
+import { TawkTo } from "@/components/tawk-to"
 import "./globals.css"
 
 const inter = Inter({
@@ -49,6 +50,7 @@ export default function RootLayout({
           <SiteFooter />
         </div>
         <CookieConsent />
+        <TawkTo />
         <Toaster />
       </body>
     </html>
