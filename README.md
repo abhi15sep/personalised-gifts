@@ -17,6 +17,7 @@ A full-featured personalised gifts e-commerce website built with Next.js 15, MyS
 | State | Zustand |
 | Image CDN | Cloudinary |
 | Email | Resend |
+| Live Chat | [Tawk.to](docs/TAWK_LIVE_CHAT.md) |
 | Canvas | Fabric.js |
 | Deployment | Standalone Node.js (Hostinger VPS) |
 
@@ -241,6 +242,7 @@ This project uses 5 external services. Here's what each one does, whether it's f
 | **Tink** | Pay by Bank — direct bank transfers in GBP via open banking | Free sandbox, Enterprise for production | Contact Tink for pricing |
 | **Cloudinary** | Stores and serves product images with auto-resize | 25 credits/mo (~25GB storage + 25GB bandwidth) | Pay-as-you-go from $89/mo |
 | **Resend** | Sends transactional emails (order confirmation, shipping updates) | 3,000 emails/month, 100 emails/day | $20/mo for 50K emails |
+| **Tawk.to** | Live chat widget for customer support | Completely free (unlimited agents, chats, history) | Free forever |
 
 > All services have generous free tiers that are more than enough for development, testing, and early-stage launch.
 
@@ -363,7 +365,28 @@ RESEND_API_KEY=re_xxxxxxxxxxxxxxxxxxxxxxxx
 
 ---
 
-#### 5f. Create the .env File
+#### 5f. Tawk.to (Live Chat Support)
+
+**What it does:** Adds a live chat widget to your site so customers can message you in real-time. Includes ticketing for offline messages, visitor monitoring, knowledge base, and a mobile app for replying on the go.
+
+**How to get the keys:**
+
+1. Go to [tawk.to](https://www.tawk.to) and sign up (free, no credit card)
+2. Create a Property with your site URL
+3. Go to **Administration** → **Channels** → **Chat Widget**
+4. From the script URL `https://embed.tawk.to/{PROPERTY_ID}/{WIDGET_ID}`, copy the two IDs
+
+**Keys needed:**
+```
+NEXT_PUBLIC_TAWK_PROPERTY_ID=your_property_id
+NEXT_PUBLIC_TAWK_WIDGET_ID=your_widget_id
+```
+
+> Tawk.to is completely free — unlimited agents, unlimited chats, unlimited history. For the full guide, see [docs/TAWK_LIVE_CHAT.md](docs/TAWK_LIVE_CHAT.md).
+
+---
+
+#### 5g. Create the .env File
 
 ```bash
 cp .env.example .env
@@ -406,6 +429,10 @@ CLOUDINARY_API_SECRET=your_api_secret
 
 # Resend Emails (from Step 5e)
 RESEND_API_KEY=re_xxxxxxxxxxxx
+
+# Tawk.to Live Chat (from Step 5f)
+NEXT_PUBLIC_TAWK_PROPERTY_ID=your_property_id
+NEXT_PUBLIC_TAWK_WIDGET_ID=your_widget_id
 
 # Your domain
 NEXT_PUBLIC_BASE_URL=https://yourdomain.com
