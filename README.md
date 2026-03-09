@@ -1,6 +1,6 @@
 # PersonalisedGifts - E-Commerce Platform
 
-A full-featured personalised gifts e-commerce website built with Next.js 15, MySQL 8.0, Prisma, Clerk Auth, Stripe + PhonePe payments, and Tailwind CSS.
+A full-featured personalised gifts e-commerce website built with Next.js 15, MySQL 8.0, Prisma, Clerk Auth, Stripe + Tink Pay by Bank payments, and Tailwind CSS.
 
 ## Tech Stack
 
@@ -11,8 +11,8 @@ A full-featured personalised gifts e-commerce website built with Next.js 15, MyS
 | Database | MySQL 8.0 |
 | ORM | Prisma |
 | Auth | Clerk |
-| Payments (GBP) | Stripe Checkout |
-| Payments (INR) | PhonePe (UPI, Cards, Wallets) |
+| Payments (GBP Cards) | Stripe Checkout |
+| Payments (GBP Bank) | [Tink Pay by Bank](docs/TINK_PAY_BY_BANK.md) |
 | Styling | Tailwind CSS v4 + shadcn/ui |
 | State | Zustand |
 | Image CDN | Cloudinary |
@@ -56,9 +56,9 @@ src/
 │   ├── account/            # User account (orders, wishlist, addresses)
 │   ├── api/
 │   │   ├── upload/         # Cloudinary image upload endpoint (admin only)
-│   │   └── webhooks/       # Stripe, Clerk & PhonePe webhook handlers
+│   │   └── webhooks/       # Stripe, Clerk & Tink webhook handlers
 │   ├── cart/               # Shopping cart
-│   ├── checkout/           # Checkout flow + success + PhonePe return
+│   ├── checkout/           # Checkout flow + success + Tink return
 │   ├── category/[slug]/    # Category pages
 │   ├── occasion/[slug]/    # Occasion pages
 │   ├── products/           # Product listing + detail pages
@@ -76,14 +76,14 @@ src/
 │   │   ├── admin.ts        # Admin role guard (requireAdmin, isAdmin)
 │   │   ├── admin-products.ts # Product CRUD, dashboard stats
 │   │   ├── checkout.ts     # Stripe checkout
-│   │   ├── phonepe-checkout.ts # PhonePe checkout
+│   │   ├── tink-checkout.ts # Tink Pay by Bank checkout
 │   │   ├── products.ts     # Product queries (public)
 │   │   ├── user.ts         # User management, wishlist
 │   │   └── address.ts      # Address CRUD
 │   ├── db.ts               # Prisma client
 │   ├── stripe.ts           # Stripe server SDK
 │   ├── stripe-client.ts    # Stripe client SDK
-│   ├── phonepe.ts          # PhonePe payment gateway helpers
+│   ├── tink.ts             # Tink Pay by Bank API helpers
 │   ├── cloudinary.ts       # Cloudinary config
 │   ├── resend.ts           # Resend email client
 │   ├── constants.ts        # Site constants (GBP + INR)
@@ -144,7 +144,7 @@ npx prisma studio
 - Hostinger VPS with Ubuntu 22.04+ (KVM plan recommended, minimum 2GB RAM)
 - SSH access to your VPS
 - A domain name pointed to your VPS IP address
-- Accounts for: [Clerk](https://clerk.com), [Stripe](https://stripe.com), [PhonePe Business](https://www.phonepe.com/business/), [Cloudinary](https://cloudinary.com), [Resend](https://resend.com)
+- Accounts for: [Clerk](https://clerk.com), [Stripe](https://stripe.com), [Tink](https://console.tink.com), [Cloudinary](https://cloudinary.com), [Resend](https://resend.com)
 
 ---
 
@@ -238,7 +238,7 @@ This project uses 5 external services. Here's what each one does, whether it's f
 |---|---|---|---|
 | **Clerk** | User sign-up, sign-in, session management, social login | 10,000 monthly active users | $25/mo for 10K+ MAU |
 | **Stripe** | Accepts card payments in GBP (Apple Pay, Google Pay, Klarna) | Free to set up, no monthly fee | 1.5% + 20p per UK card transaction |
-| **PhonePe** | Accepts UPI, debit/credit cards, wallets in INR | Free to set up, no monthly fee | ~1.5-2% per transaction |
+| **Tink** | Pay by Bank — direct bank transfers in GBP via open banking | Free sandbox, Enterprise for production | Contact Tink for pricing |
 | **Cloudinary** | Stores and serves product images with auto-resize | 25 credits/mo (~25GB storage + 25GB bandwidth) | Pay-as-you-go from $89/mo |
 | **Resend** | Sends transactional emails (order confirmation, shipping updates) | 3,000 emails/month, 100 emails/day | $20/mo for 50K emails |
 
@@ -290,41 +290,44 @@ STRIPE_WEBHOOK_SECRET=whsec_xxxxxxxxxxxxxxxx
 
 ---
 
-#### 5c. PhonePe (UPI Payments - INR)
+#### 5c. Tink (Pay by Bank - GBP)
 
-**What it does:** Processes payments in INR via UPI, debit/credit cards, and wallets. Customers are redirected to PhonePe's payment page where they can pay using any UPI app (PhonePe, Google Pay, Paytm, etc.), cards, or net banking.
+**What it does:** Enables customers to pay directly from their bank account via open banking. Uses Tink's Payment Initiation Service (PIS) with Faster Payments. Customer selects their bank, authenticates via their banking app (FaceID/fingerprint/QR code), and payment is sent instantly.
 
 **How to get the keys:**
 
-1. Go to [PhonePe Business](https://www.phonepe.com/business/) and sign up as a merchant
-2. Complete KYC verification
-3. Once approved, you'll get access to the merchant dashboard
-4. Navigate to **Developer Settings > API Keys**
-5. Copy the **Merchant ID**, **Salt Key**, and **Salt Index**
-6. For testing, use PhonePe's **UAT (sandbox)** environment
+1. Go to [console.tink.com](https://console.tink.com) and sign up as a Developer (free)
+2. Create an App → select market: United Kingdom (GB)
+3. Go to **App Settings > API Client > App details**
+4. Copy the **Client ID** and **Client Secret**
+5. Go to **App Settings > Scopes** → enable `payment:write` and `payment:read`
+6. Go to **App Settings > Redirect URIs** → add `https://yourdomain.com/checkout/tink-return`
 
 **Keys needed:**
 ```
-PHONEPE_MERCHANT_ID=your_merchant_id
-PHONEPE_SALT_KEY=your_salt_key
-PHONEPE_SALT_INDEX=1
-PHONEPE_ENV=UAT
+TINK_CLIENT_ID=your_client_id
+TINK_CLIENT_SECRET=your_client_secret
+TINK_DEST_ACCOUNT_NUMBER=12345678
+TINK_DEST_SORT_CODE=040004
+TINK_REDIRECT_URI=https://yourdomain.com/checkout/tink-return
+TINK_ENV=sandbox
 ```
 
-> Set `PHONEPE_ENV=PRODUCTION` when going live. UAT uses sandbox URLs for testing without real money.
+> Set `TINK_ENV=production` when going live. For sandbox, dummy bank details are fine — Demo Bank simulates everything. For the full integration guide, see [docs/TINK_PAY_BY_BANK.md](docs/TINK_PAY_BY_BANK.md).
 
-**How PhonePe payment flow works:**
-1. Customer selects "Pay with UPI (INR)" at checkout
-2. Prices are converted from GBP to INR (at approximate rate of 1 GBP = 105 INR)
-3. Server creates a payment order via PhonePe API and gets a redirect URL
-4. Customer is redirected to PhonePe PayPage to complete payment
-5. After payment, PhonePe redirects back to `/checkout/phonepe-return`
-6. PhonePe also sends a server-to-server callback to `/api/webhooks/phonepe`
+**How Tink payment flow works:**
+1. Customer selects "Pay by Bank" at checkout
+2. Server creates a payment request via Tink API with your bank account as destination
+3. Customer is redirected to Tink Link (hosted by Tink)
+4. Customer selects their bank, authenticates via banking app (QR code on desktop)
+5. After payment, Tink redirects back to `/checkout/tink-return`
+6. Tink sends a webhook to `/api/webhooks/tink` confirming settlement
 7. Order status is updated to PAID on success
 
 ---
 
 #### 5d. Cloudinary (Image Storage & CDN)
+
 
 **What it does:** Stores all product images. Automatically resizes, converts to modern formats (WebP/AVIF), and serves from a global CDN.
 
@@ -384,11 +387,17 @@ NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY=pk_live_xxxxxxxxxxxx
 STRIPE_SECRET_KEY=sk_live_xxxxxxxxxxxx
 STRIPE_WEBHOOK_SECRET=whsec_xxxxxxxxxxxx
 
-# PhonePe Payments - INR (from Step 5c)
-PHONEPE_MERCHANT_ID=your_merchant_id
-PHONEPE_SALT_KEY=your_salt_key
-PHONEPE_SALT_INDEX=1
-PHONEPE_ENV=PRODUCTION
+# Tink Pay by Bank - GBP (from Step 5c)
+TINK_CLIENT_ID=your_client_id
+TINK_CLIENT_SECRET=your_client_secret
+TINK_DEST_ACCOUNT_NUMBER=12345678
+TINK_DEST_SORT_CODE=040004
+TINK_PAYEE_NAME=PersonalisedGifts
+TINK_MARKET=GB
+TINK_LOCALE=en_GB
+TINK_REDIRECT_URI=https://yourdomain.com/checkout/tink-return
+TINK_WEBHOOK_SECRET=
+TINK_ENV=sandbox
 
 # Cloudinary Images (from Step 5d)
 NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME=your_cloud_name
@@ -430,7 +439,7 @@ npx prisma db seed
 | `ProductVariant` | Size/colour variants with SKU and stock |
 | `PersonalizationOption` | Per-product personalisation config (text, image, font, colour) |
 | `ProductOccasion` | Product-to-occasion mapping (many-to-many) |
-| `Order` | Orders with Stripe/PhonePe integration, gift options, status tracking |
+| `Order` | Orders with Stripe/Tink integration, gift options, status tracking |
 | `OrderItem` | Line items with personalisation data and preview snapshots |
 | `Review` | Product reviews with ratings and photos |
 | `Wishlist` | User wishlists |
@@ -662,9 +671,17 @@ Now that your domain is live with HTTPS, set up webhook endpoints for each servi
 3. Select events: `user.created`, `user.updated`
 4. Also go to **Clerk Dashboard > Settings > Domains** and add `gift.devops-monk.com`
 
-#### PhonePe Callback
+#### Tink Webhooks (optional for sandbox)
 
-PhonePe's server-to-server callback is configured automatically via the `callbackUrl` parameter when creating a payment. It uses `NEXT_PUBLIC_BASE_URL` from your `.env`, so it will automatically point to `https://gift.devops-monk.com/api/webhooks/phonepe`. No manual webhook setup is needed.
+1. Go to [Tink Console](https://console.tink.com) → App Settings → Webhooks
+2. Add endpoint: `https://gift.devops-monk.com/api/webhooks/tink`
+3. Select event: `payment:updated`
+4. Copy the signing secret and update `.env`:
+   ```
+   TINK_WEBHOOK_SECRET=your_signing_secret
+   ```
+
+> Tink webhooks are optional for sandbox testing — the return page checks payment status directly. For production, webhooks are the reliable way to confirm settlement.
 
 #### After updating webhook secrets, rebuild:
 
@@ -963,6 +980,12 @@ Open [http://localhost:3000](http://localhost:3000) to view the application.
 
 Use any future expiry date, any 3-digit CVC, and any postcode.
 
-### PhonePe UAT Testing
+### Tink Demo Bank Testing
 
-When `PHONEPE_ENV=UAT`, payments use PhonePe's sandbox environment. No real money is charged. The PhonePe test page will simulate various payment outcomes (success, failure, pending).
+When `TINK_ENV=sandbox`, the Tink Link page shows a Demo Bank option. Demo Bank credentials come from the Tink Console:
+
+1. Go to [console.tink.com](https://console.tink.com) → **Demo Bank** → Product: **Payments** → Market: **United Kingdom**
+2. Use the test user credentials shown (e.g. Username: `u83646180`, Password: `rlf446`)
+
+No real money is transferred in sandbox mode. For the full testing guide, see [docs/TINK_PAY_BY_BANK.md](docs/TINK_PAY_BY_BANK.md).
+
