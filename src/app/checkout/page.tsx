@@ -1,12 +1,13 @@
 // @ts-nocheck - zod v4 has type incompatibility with react-hook-form's resolver
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import Link from "next/link"
 import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { z } from "zod"
 import { Check, CreditCard, Landmark, Loader2 } from "lucide-react"
+import { useUser } from "@clerk/nextjs"
 
 import { useCartStore } from "@/stores/cart-store"
 import { formatPrice } from "@/lib/format"
@@ -17,6 +18,7 @@ import {
 } from "@/lib/constants"
 import { createCheckoutSession } from "@/lib/actions/checkout"
 import { createTinkCheckoutSession } from "@/lib/actions/tink-checkout"
+import { getUserAddresses } from "@/lib/actions/address"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Checkbox } from "@/components/ui/checkbox"
@@ -32,6 +34,13 @@ import {
   FormLabel,
   FormMessage,
 } from "@/components/ui/form"
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select"
 
 const shippingSchema = z.object({
   fullName: z.string().min(2, "Full name is required"),
@@ -56,11 +65,26 @@ const STEPS = [
   { number: 3, label: "Confirmation" },
 ]
 
+type SavedAddress = {
+  id: bigint
+  label: string | null
+  fullName: string
+  line1: string
+  line2: string | null
+  city: string
+  county: string | null
+  postalCode: string
+  country: string
+  isDefault: boolean
+}
+
 export default function CheckoutPage() {
   const [currentStep, setCurrentStep] = useState(1)
   const [isProcessing, setIsProcessing] = useState(false)
   const [shippingData, setShippingData] = useState<ShippingFormValues | null>(null)
   const [paymentMethod, setPaymentMethod] = useState<'stripe' | 'tink'>('stripe')
+  const [savedAddresses, setSavedAddresses] = useState<SavedAddress[]>([])
+  const { isSignedIn, user } = useUser()
   const {
     items,
     isGift,
@@ -92,6 +116,82 @@ export default function CheckoutPage() {
       giftWrap: giftWrap,
     },
   })
+
+  // Fetch saved addresses and pre-fill default for logged-in users
+  useEffect(() => {
+    if (!isSignedIn) return
+
+    async function loadAddresses() {
+      try {
+        const addresses = await getUserAddresses()
+        setSavedAddresses(addresses)
+
+        // Pre-fill form with default address (first in list, ordered by isDefault desc)
+        const defaultAddr = addresses.find((a) => a.isDefault) || addresses[0]
+        if (defaultAddr) {
+          form.reset({
+            fullName: defaultAddr.fullName,
+            email: user?.primaryEmailAddress?.emailAddress ?? "",
+            phone: user?.primaryPhoneNumber?.phoneNumber ?? "",
+            addressLine1: defaultAddr.line1,
+            addressLine2: defaultAddr.line2 ?? "",
+            city: defaultAddr.city,
+            county: defaultAddr.county ?? "",
+            postcode: defaultAddr.postalCode,
+            country: defaultAddr.country,
+            isGift: isGift,
+            giftMessage: giftMessage,
+            giftWrap: giftWrap,
+          })
+        } else {
+          // No saved address, but still pre-fill name/email from Clerk profile
+          form.setValue("email", user?.primaryEmailAddress?.emailAddress ?? "")
+          form.setValue("fullName", user?.fullName ?? "")
+        }
+      } catch {
+        // User might not be synced to DB yet, silently ignore
+      }
+    }
+
+    loadAddresses()
+  }, [isSignedIn]) // eslint-disable-line react-hooks/exhaustive-deps
+
+  function handleAddressSelect(addressId: string) {
+    if (addressId === "new") {
+      form.reset({
+        fullName: "",
+        email: user?.primaryEmailAddress?.emailAddress ?? "",
+        phone: "",
+        addressLine1: "",
+        addressLine2: "",
+        city: "",
+        county: "",
+        postcode: "",
+        country: "GB",
+        isGift: form.getValues("isGift"),
+        giftMessage: form.getValues("giftMessage"),
+        giftWrap: form.getValues("giftWrap"),
+      })
+      return
+    }
+    const addr = savedAddresses.find((a) => String(a.id) === addressId)
+    if (addr) {
+      form.reset({
+        fullName: addr.fullName,
+        email: user?.primaryEmailAddress?.emailAddress ?? "",
+        phone: user?.primaryPhoneNumber?.phoneNumber ?? "",
+        addressLine1: addr.line1,
+        addressLine2: addr.line2 ?? "",
+        city: addr.city,
+        county: addr.county ?? "",
+        postcode: addr.postalCode,
+        country: addr.country,
+        isGift: form.getValues("isGift"),
+        giftMessage: form.getValues("giftMessage"),
+        giftWrap: form.getValues("giftWrap"),
+      })
+    }
+  }
 
   function onShippingSubmit(data: ShippingFormValues) {
     setGiftOptions(data.isGift, data.giftMessage ?? "", data.giftWrap)
@@ -213,6 +313,36 @@ export default function CheckoutPage() {
                     onSubmit={form.handleSubmit(onShippingSubmit)}
                     className="space-y-4"
                   >
+                    {/* Saved Address Selector */}
+                    {savedAddresses.length > 0 && (
+                      <div className="space-y-2">
+                        <Label className="text-gray-600">Saved Addresses</Label>
+                        <Select
+                          defaultValue={String(
+                            (savedAddresses.find((a) => a.isDefault) || savedAddresses[0]).id
+                          )}
+                          onValueChange={handleAddressSelect}
+                        >
+                          <SelectTrigger className="border-gray-200 bg-white">
+                            <SelectValue placeholder="Select an address" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {savedAddresses.map((addr) => (
+                              <SelectItem key={String(addr.id)} value={String(addr.id)}>
+                                {addr.label ? `${addr.label} — ` : ""}
+                                {addr.line1}, {addr.city}, {addr.postalCode}
+                                {addr.isDefault ? " (Default)" : ""}
+                              </SelectItem>
+                            ))}
+                            <SelectItem value="new">
+                              + Enter a new address
+                            </SelectItem>
+                          </SelectContent>
+                        </Select>
+                        <Separator className="bg-gray-200" />
+                      </div>
+                    )}
+
                     {/* Name & Email */}
                     <div className="grid gap-4 sm:grid-cols-2">
                       <FormField
