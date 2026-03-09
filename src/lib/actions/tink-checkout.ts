@@ -180,11 +180,9 @@ export async function createTinkCheckoutSession(
     },
   })
 
-  // Create Tink payment request — amount in pence
-  const totalInPence = Math.round(totalAmount * 100)
-
+  // Create Tink payment request — amount in pounds
   const result = await createTinkPaymentRequest({
-    amountInPence: totalInPence,
+    amount: totalAmount,
     reference: orderNumber,
     sourceMessage: `Order ${orderNumber}`,
   })

@@ -63,7 +63,7 @@ export async function getTinkAccessToken(): Promise<string> {
 // ─── Create Payment Request ─────────────────────────────────────────────────
 
 interface TinkPaymentRequestParams {
-  amountInPence: number
+  amount: number // amount in pounds (e.g. 13.99)
   reference: string
   sourceMessage?: string
 }
@@ -96,7 +96,7 @@ export async function createTinkPaymentRequest(
         reference: params.reference,
       },
     ],
-    amount: params.amountInPence, // amount in minor units (pence)
+    amount: params.amount, // amount in major units (pounds, e.g. 13.99)
     currency: 'GBP',
     market: TINK_MARKET,
     recipientName: TINK_PAYEE_NAME,
