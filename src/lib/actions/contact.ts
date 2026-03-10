@@ -23,7 +23,7 @@ export async function submitContactMessage(data: {
 }) {
   const parsed = contactSchema.safeParse(data)
   if (!parsed.success) {
-    return { success: false, error: parsed.error.errors[0].message }
+    return { success: false, error: parsed.error.issues[0].message }
   }
 
   const { name, email, subject, orderNumber, message } = parsed.data
