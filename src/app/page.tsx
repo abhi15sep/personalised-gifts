@@ -7,11 +7,13 @@ import { Button } from "@/components/ui/button"
 import { HERO_IMAGE, DEFAULT_OCCASION_BANNER } from "@/lib/constants"
 import { getOccasions, getProducts } from "@/lib/actions/products"
 import { ProductCard } from "@/components/product/product-card"
+import { getWishlistedProductIds } from "@/lib/get-wishlisted-ids"
 
 export default async function HomePage() {
-  const [occasions, { products: newestProducts }] = await Promise.all([
+  const [occasions, { products: newestProducts }, wishlistedIds] = await Promise.all([
     getOccasions({ withProducts: true }),
     getProducts({ limit: 8, sortBy: 'newest' }),
+    getWishlistedProductIds(),
   ])
   return (
     <div className="flex flex-col">
@@ -95,6 +97,7 @@ export default async function HomePage() {
               {newestProducts.map((product) => (
                 <ProductCard
                   key={product.id}
+                  initialWishlisted={wishlistedIds.has(product.id)}
                   product={{
                     id: product.id,
                     name: product.name,

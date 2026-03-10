@@ -3,13 +3,16 @@
 import { useState } from "react"
 import Link from "next/link"
 import Image from "next/image"
-import { Heart } from "lucide-react"
+import { Heart, Loader2 } from "lucide-react"
+import { useUser } from "@clerk/nextjs"
+import { useRouter } from "next/navigation"
 
 import { cn } from "@/lib/utils"
 import { PRODUCT_IMAGES } from "@/lib/constants"
 import { Card, CardContent } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
+import { toggleWishlist } from "@/lib/actions/user"
 
 interface ProductImage {
   url: string
@@ -28,6 +31,7 @@ interface Product {
 
 interface ProductCardProps {
   product: Product
+  initialWishlisted?: boolean
 }
 
 function formatPrice(price: number) {
@@ -37,8 +41,11 @@ function formatPrice(price: number) {
   }).format(price)
 }
 
-export function ProductCard({ product }: ProductCardProps) {
-  const [isWishlisted, setIsWishlisted] = useState(false)
+export function ProductCard({ product, initialWishlisted = false }: ProductCardProps) {
+  const [isWishlisted, setIsWishlisted] = useState(initialWishlisted)
+  const [isToggling, setIsToggling] = useState(false)
+  const { isSignedIn } = useUser()
+  const router = useRouter()
   const hasDiscount =
     product.compareAtPrice != null && product.compareAtPrice > product.basePrice
   const discountPercent = hasDiscount
@@ -57,12 +64,32 @@ export function ProductCard({ product }: ProductCardProps) {
       <Button
         variant="ghost"
         size="icon"
-        onClick={() => setIsWishlisted(!isWishlisted)}
+        disabled={isToggling}
+        onClick={async (e) => {
+          e.preventDefault()
+          if (!isSignedIn) {
+            router.push("/sign-in")
+            return
+          }
+          setIsToggling(true)
+          try {
+            const result = await toggleWishlist(product.id)
+            setIsWishlisted(result.added)
+          } catch (err) {
+            console.error("Failed to toggle wishlist:", err)
+          } finally {
+            setIsToggling(false)
+          }
+        }}
         className="absolute right-2 top-2 z-10 h-8 w-8 rounded-full bg-white/80 backdrop-blur-sm hover:bg-white text-gray-500 hover:text-charcoal"
       >
-        <Heart
-          className={cn("h-4 w-4", isWishlisted && "fill-rose text-rose")}
-        />
+        {isToggling ? (
+          <Loader2 className="h-4 w-4 animate-spin" />
+        ) : (
+          <Heart
+            className={cn("h-4 w-4", isWishlisted && "fill-rose text-rose")}
+          />
+        )}
         <span className="sr-only">
           {isWishlisted ? "Remove from wishlist" : "Add to wishlist"}
         </span>

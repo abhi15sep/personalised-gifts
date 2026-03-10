@@ -25,6 +25,7 @@ import {
 import { ImageGallery } from "@/components/product/image-gallery"
 import { AddToCart } from "@/components/product/add-to-cart"
 import { ProductCard } from "@/components/product/product-card"
+import { getWishlistedProductIds } from "@/lib/get-wishlisted-ids"
 import { ReviewForm } from "@/components/product/review-form"
 
 function StarRating({ rating, count }: { rating: number; count: number }) {
@@ -84,11 +85,11 @@ export default async function ProductDetailPage({ params }: PageProps) {
     value: v.sku || String(v.id),
   }))
 
-  // Fetch related products from same category
-  const { products: relatedProducts } = await getProducts({
-    categorySlug: product.category?.slug,
-    limit: 4,
-  })
+  // Fetch related products from same category + wishlist state
+  const [{ products: relatedProducts }, wishlistedIds] = await Promise.all([
+    getProducts({ categorySlug: product.category?.slug, limit: 4 }),
+    getWishlistedProductIds(),
+  ])
   const similarProducts = relatedProducts.filter((p) => p.id !== product.id).slice(0, 4)
 
   return (
@@ -266,6 +267,7 @@ export default async function ProductDetailPage({ params }: PageProps) {
             {similarProducts.map((item) => (
               <ProductCard
                 key={item.id}
+                initialWishlisted={wishlistedIds.has(item.id)}
                 product={{
                   id: item.id,
                   name: item.name,

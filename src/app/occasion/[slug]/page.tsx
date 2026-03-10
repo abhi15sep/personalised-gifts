@@ -9,6 +9,7 @@ import { Metadata } from "next"
 import { getProductsByOccasion, getOccasions } from "@/lib/actions/products"
 import { DEFAULT_OCCASION_BANNER, DEFAULT_OCCASION_TAGLINE } from "@/lib/constants"
 import { ProductCard } from "@/components/product/product-card"
+import { getWishlistedProductIds } from "@/lib/get-wishlisted-ids"
 import { Button } from "@/components/ui/button"
 
 interface PageProps {
@@ -46,7 +47,10 @@ export default async function OccasionPage({ params }: PageProps) {
     notFound()
   }
 
-  const products = await getProductsByOccasion(slug)
+  const [products, wishlistedIds] = await Promise.all([
+    getProductsByOccasion(slug),
+    getWishlistedProductIds(),
+  ])
 
   // Priority: DB bannerUrl (set via admin) > generic placeholder
   const bannerUrl = occasion.bannerUrl || DEFAULT_OCCASION_BANNER
@@ -149,6 +153,7 @@ export default async function OccasionPage({ params }: PageProps) {
               {products.map((product) => (
                 <ProductCard
                   key={product.id}
+                  initialWishlisted={wishlistedIds.has(product.id)}
                   product={{
                     id: product.id,
                     name: product.name,

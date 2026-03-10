@@ -4,6 +4,7 @@ import Link from "next/link"
 import { SlidersHorizontal } from "lucide-react"
 
 import { getProducts, getCategories, getOccasions } from "@/lib/actions/products"
+import { getWishlistedProductIds } from "@/lib/get-wishlisted-ids"
 import {
   Breadcrumb,
   BreadcrumbItem,
@@ -51,7 +52,7 @@ export default async function ProductsPage({ searchParams }: ProductsPageProps) 
   const priceMin = params.priceMin ? Number(params.priceMin) : undefined
   const priceMax = params.priceMax ? Number(params.priceMax) : undefined
 
-  const [{ products, totalCount, totalPages }, categories, occasions] = await Promise.all([
+  const [{ products, totalCount, totalPages }, categories, occasions, wishlistedIds] = await Promise.all([
     getProducts({
       categorySlug: params.category,
       occasionSlug: params.occasion,
@@ -63,6 +64,7 @@ export default async function ProductsPage({ searchParams }: ProductsPageProps) 
     }),
     getCategories({ withProducts: true }),
     getOccasions({ withProducts: true }),
+    getWishlistedProductIds(),
   ])
 
   function buildPageUrl(pageNum: number) {
@@ -157,6 +159,7 @@ export default async function ProductsPage({ searchParams }: ProductsPageProps) 
               {products.map((product) => (
                 <ProductCard
                   key={product.id}
+                  initialWishlisted={wishlistedIds.has(product.id)}
                   product={{
                     id: product.id,
                     name: product.name,

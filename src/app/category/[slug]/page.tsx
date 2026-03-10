@@ -5,6 +5,7 @@ import { Metadata } from "next"
 
 import { getProducts, getCategories } from "@/lib/actions/products"
 import { ProductCard } from "@/components/product/product-card"
+import { getWishlistedProductIds } from "@/lib/get-wishlisted-ids"
 
 interface PageProps {
   params: Promise<{ slug: string }>
@@ -42,7 +43,10 @@ export default async function CategoryPage({ params }: PageProps) {
     notFound()
   }
 
-  const { products } = await getProducts({ categorySlug: slug })
+  const [{ products }, wishlistedIds] = await Promise.all([
+    getProducts({ categorySlug: slug }),
+    getWishlistedProductIds(),
+  ])
 
   return (
     <div className="px-4 py-8 md:py-12">
@@ -78,6 +82,7 @@ export default async function CategoryPage({ params }: PageProps) {
             {products.map((product) => (
               <ProductCard
                 key={product.id}
+                initialWishlisted={wishlistedIds.has(product.id)}
                 product={{
                   id: product.id,
                   name: product.name,
