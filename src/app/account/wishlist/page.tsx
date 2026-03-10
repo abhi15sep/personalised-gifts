@@ -10,6 +10,7 @@ import { Button } from "@/components/ui/button"
 import Link from "next/link"
 import Image from "next/image"
 import { Heart, ShoppingBag } from "lucide-react"
+import { WishlistRemoveButton } from "@/components/wishlist-remove-button"
 
 export default async function WishlistPage() {
   const { userId } = await auth()
@@ -59,6 +60,8 @@ export default async function WishlistPage() {
             const imageUrl = item.product.images[0]?.url || PRODUCT_IMAGES[item.product.slug] || null
             return (
             <Card key={item.id} className="overflow-hidden">
+              <div className="relative">
+                <WishlistRemoveButton productId={item.product.id} />
               <Link href={`/products/${item.product.slug}`}>
                 <div className="relative aspect-square bg-gray-100">
                   {imageUrl ? (
@@ -75,6 +78,7 @@ export default async function WishlistPage() {
                   )}
                 </div>
               </Link>
+              </div>
               <CardContent className="p-4">
                 <Link href={`/products/${item.product.slug}`}>
                   <h3 className="font-medium hover:text-rose transition-colors">
