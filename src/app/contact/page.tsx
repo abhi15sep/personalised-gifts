@@ -1,10 +1,11 @@
 "use client"
 
 import { useState } from "react"
-import { Mail, Phone, MapPin, Clock, Send } from "lucide-react"
+import { Mail, Phone, MapPin, Clock, Send, Loader2 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
+import { submitContactMessage } from "@/lib/actions/contact"
 
 const contactInfo = [
   {
@@ -35,10 +36,35 @@ const contactInfo = [
 
 export default function ContactPage() {
   const [submitted, setSubmitted] = useState(false)
+  const [error, setError] = useState<string | null>(null)
+  const [isSubmitting, setIsSubmitting] = useState(false)
 
-  function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
+  async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault()
-    setSubmitted(true)
+    setError(null)
+    setIsSubmitting(true)
+
+    const formData = new FormData(e.currentTarget)
+    const data = {
+      name: formData.get("name") as string,
+      email: formData.get("email") as string,
+      subject: formData.get("subject") as string,
+      orderNumber: (formData.get("orderNumber") as string) || undefined,
+      message: formData.get("message") as string,
+    }
+
+    try {
+      const result = await submitContactMessage(data)
+      if (result.success) {
+        setSubmitted(true)
+      } else {
+        setError(result.error || "Something went wrong. Please try again.")
+      }
+    } catch {
+      setError("Something went wrong. Please try again.")
+    } finally {
+      setIsSubmitting(false)
+    }
   }
 
   return (
@@ -104,12 +130,13 @@ export default function ContactPage() {
               <div className="grid gap-4 sm:grid-cols-2">
                 <div>
                   <Label htmlFor="name">Full Name</Label>
-                  <Input id="name" placeholder="John Smith" required />
+                  <Input id="name" name="name" placeholder="John Smith" required />
                 </div>
                 <div>
                   <Label htmlFor="email">Email</Label>
                   <Input
                     id="email"
+                    name="email"
                     type="email"
                     placeholder="john@example.com"
                     required
@@ -118,27 +145,45 @@ export default function ContactPage() {
               </div>
               <div>
                 <Label htmlFor="subject">Subject</Label>
-                <Input id="subject" placeholder="Order enquiry" required />
+                <Input id="subject" name="subject" placeholder="Order enquiry" required />
               </div>
               <div>
                 <Label htmlFor="orderNumber">
                   Order Number{" "}
                   <span className="text-muted-foreground">(optional)</span>
                 </Label>
-                <Input id="orderNumber" placeholder="PG-XXXXXXXX" />
+                <Input id="orderNumber" name="orderNumber" placeholder="PG-XXXXXXXX" />
               </div>
               <div>
                 <Label htmlFor="message">Message</Label>
                 <textarea
                   id="message"
+                  name="message"
                   rows={5}
                   required
+                  minLength={10}
                   placeholder="How can we help you?"
                   className="flex w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
                 />
               </div>
-              <Button type="submit" className="w-full bg-rose hover:bg-rose-dark">
-                Send Message
+
+              {error && (
+                <p className="text-sm text-red-600">{error}</p>
+              )}
+
+              <Button
+                type="submit"
+                className="w-full bg-rose hover:bg-rose-dark"
+                disabled={isSubmitting}
+              >
+                {isSubmitting ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    Sending...
+                  </>
+                ) : (
+                  "Send Message"
+                )}
               </Button>
             </form>
           )}
