@@ -40,9 +40,10 @@ export async function submitContactMessage(data: {
   })
 
   // Send notification email to support
+  const fromEmail = process.env.RESEND_FROM_EMAIL || 'onboarding@resend.dev'
   try {
-    await resend.emails.send({
-      from: `PersonalisedGifts <${process.env.RESEND_FROM_EMAIL || 'noreply@personalisedgifts.co.uk'}>`,
+    const emailResult = await resend.emails.send({
+      from: `PersonalisedGifts <${fromEmail}>`,
       to: SUPPORT_EMAIL,
       replyTo: email,
       subject: `Contact Form: ${subject}`,
@@ -58,6 +59,7 @@ export async function submitContactMessage(data: {
         <p style="white-space:pre-wrap">${message}</p>
       `,
     })
+    console.log('Contact email sent:', emailResult)
   } catch (err) {
     // Email failure shouldn't block the submission — message is already saved in DB
     console.error('Failed to send contact notification email:', err)
