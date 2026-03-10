@@ -67,7 +67,7 @@ export default async function OrderDetailPage({
   return (
     <div>
       <Button variant="ghost" size="sm" asChild className="mb-4">
-        <Link href="/account">
+        <Link href="/account/orders">
           <ArrowLeft className="size-4 mr-1" />
           Back to Orders
         </Link>

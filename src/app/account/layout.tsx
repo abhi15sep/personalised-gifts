@@ -4,7 +4,7 @@ import { Package, Heart, MapPin } from "lucide-react"
 export const dynamic = "force-dynamic"
 
 const accountLinks = [
-  { href: "/account", label: "My Orders", icon: Package },
+  { href: "/account/orders", label: "My Orders", icon: Package },
   { href: "/account/wishlist", label: "Wishlist", icon: Heart },
   { href: "/account/addresses", label: "Addresses", icon: MapPin },
 ]
