@@ -4,7 +4,7 @@ import { db } from '@/lib/db'
 import { requireAdmin } from './admin'
 import { cloudinary } from '@/lib/cloudinary'
 import { revalidatePath } from 'next/cache'
-import type { ProductStatus, PersonalizationType } from '@prisma/client'
+import type { ProductStatus, PersonalizationType, Prisma } from '@prisma/client'
 
 // ─── Types ──────────────────────────────────────────────────────────────────
 
@@ -20,6 +20,7 @@ export interface PersonalisationOptionInput {
   type: string
   required: boolean
   priceModifier: number
+  constraints?: Record<string, unknown>
 }
 
 export interface ProductInput {
@@ -104,6 +105,7 @@ export async function createProduct(data: ProductInput) {
           optionType: mapOptionType(opt.type),
           isRequired: opt.required,
           priceModifier: opt.priceModifier,
+          constraints: opt.constraints && Object.keys(opt.constraints).length > 0 ? (opt.constraints as Prisma.InputJsonValue) : undefined,
           sortOrder: index,
         })),
       })
@@ -173,6 +175,7 @@ export async function updateProduct(id: number, data: ProductInput) {
           optionType: mapOptionType(opt.type),
           isRequired: opt.required,
           priceModifier: opt.priceModifier,
+          constraints: opt.constraints && Object.keys(opt.constraints).length > 0 ? (opt.constraints as Prisma.InputJsonValue) : undefined,
           sortOrder: index,
         })),
       })
@@ -387,6 +390,7 @@ export async function getAdminProduct(id: number) {
       type: opt.optionType.toLowerCase(),
       required: opt.isRequired,
       priceModifier: Number(opt.priceModifier),
+      constraints: (opt.constraints as Record<string, unknown>) ?? {},
     })),
     occasionIds: product.occasions.map((o) => o.occasionId),
   }

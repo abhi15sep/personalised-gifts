@@ -46,6 +46,7 @@ const personalisationOptionSchema = z.object({
   type: z.string().min(1, "Type is required"),
   required: z.boolean().default(false),
   priceModifier: z.coerce.number().min(0).default(0),
+  constraints: z.record(z.unknown()).optional(),
 })
 
 const productSchema = z.object({
@@ -106,6 +107,7 @@ interface ProductFormProps {
       type: string
       required: boolean
       priceModifier: number
+      constraints?: Record<string, unknown>
     }[]
     occasionIds: number[]
   }
@@ -626,6 +628,7 @@ export function ProductForm({
                     type: "text",
                     required: false,
                     priceModifier: 0,
+                    constraints: {},
                   })
                 }
               >
@@ -640,11 +643,21 @@ export function ProductForm({
                   Option&quot; to create one.
                 </p>
               )}
-              {fields.map((field, index) => (
+              {fields.map((field, index) => {
+                const optionType = form.watch(`personalisationOptions.${index}.type`)
+                const constraints = form.watch(`personalisationOptions.${index}.constraints`) || {}
+
+                function updateConstraint(key: string, value: unknown) {
+                  const current = form.getValues(`personalisationOptions.${index}.constraints`) || {}
+                  form.setValue(`personalisationOptions.${index}.constraints`, { ...current, [key]: value })
+                }
+
+                return (
                 <div
                   key={field.id}
-                  className="grid gap-4 rounded-lg border p-4 sm:grid-cols-[1fr_1fr_auto_auto_auto]"
+                  className="rounded-lg border p-4 space-y-4"
                 >
+                  <div className="grid gap-4 sm:grid-cols-[1fr_1fr_auto_auto_auto]">
                   <FormField
                     control={form.control}
                     name={`personalisationOptions.${index}.label`}
@@ -665,7 +678,10 @@ export function ProductForm({
                       <FormItem>
                         <FormLabel>Type</FormLabel>
                         <Select
-                          onValueChange={field.onChange}
+                          onValueChange={(v) => {
+                            field.onChange(v)
+                            form.setValue(`personalisationOptions.${index}.constraints`, {})
+                          }}
                           defaultValue={field.value}
                         >
                           <FormControl>
@@ -679,6 +695,7 @@ export function ProductForm({
                             <SelectItem value="image">Image Upload</SelectItem>
                             <SelectItem value="dropdown">Dropdown</SelectItem>
                             <SelectItem value="colour">Colour</SelectItem>
+                            <SelectItem value="font">Font</SelectItem>
                           </SelectContent>
                         </Select>
                         <FormMessage />
@@ -730,8 +747,83 @@ export function ProductForm({
                       <Trash2 className="size-4" />
                     </Button>
                   </div>
+                  </div>
+
+                  {/* Contextual constraints based on option type */}
+                  {(optionType === "text" || optionType === "textarea") && (
+                    <div className="pl-1">
+                      <label className="text-xs font-medium text-muted-foreground">Max Length</label>
+                      <Input
+                        type="number"
+                        min="1"
+                        className="mt-1 w-32"
+                        placeholder={optionType === "text" ? "50" : "200"}
+                        value={(constraints.maxLength as number) || ""}
+                        onChange={(e) => updateConstraint("maxLength", e.target.value ? parseInt(e.target.value) : undefined)}
+                      />
+                    </div>
+                  )}
+
+                  {optionType === "image" && (
+                    <div className="flex gap-6 pl-1">
+                      <div>
+                        <label className="text-xs font-medium text-muted-foreground">Max File Size (MB)</label>
+                        <Input
+                          type="number"
+                          min="1"
+                          max="20"
+                          className="mt-1 w-32"
+                          placeholder="5"
+                          value={(constraints.maxFileSizeMB as number) || ""}
+                          onChange={(e) => updateConstraint("maxFileSizeMB", e.target.value ? parseInt(e.target.value) : undefined)}
+                        />
+                      </div>
+                      <div>
+                        <label className="text-xs font-medium text-muted-foreground">Allowed Types</label>
+                        <div className="mt-2 flex gap-3">
+                          {["png", "jpg", "webp"].map((ext) => {
+                            const allowedTypes = (constraints.allowedTypes as string[]) || ["png", "jpg", "webp"]
+                            return (
+                              <label key={ext} className="flex items-center gap-1.5 text-sm">
+                                <Checkbox
+                                  checked={allowedTypes.includes(ext)}
+                                  onCheckedChange={(checked) => {
+                                    const current = (constraints.allowedTypes as string[]) || ["png", "jpg", "webp"]
+                                    const updated = checked
+                                      ? [...current, ext]
+                                      : current.filter((t: string) => t !== ext)
+                                    updateConstraint("allowedTypes", updated.length > 0 ? updated : ["png", "jpg", "webp"])
+                                  }}
+                                />
+                                {ext.toUpperCase()}
+                              </label>
+                            )
+                          })}
+                        </div>
+                      </div>
+                    </div>
+                  )}
+
+                  {optionType === "dropdown" && (
+                    <div className="pl-1">
+                      <label className="text-xs font-medium text-muted-foreground">Options (comma-separated)</label>
+                      <Input
+                        className="mt-1"
+                        placeholder="Small, Medium, Large"
+                        value={((constraints.options as string[]) || []).join(", ")}
+                        onChange={(e) => {
+                          const opts = e.target.value
+                            .split(",")
+                            .map((s: string) => s.trim())
+                            .filter(Boolean)
+                          updateConstraint("options", opts)
+                        }}
+                      />
+                    </div>
+                  )}
                 </div>
-              ))}
+                )
+              })}
             </CardContent>
           </Card>
         )}

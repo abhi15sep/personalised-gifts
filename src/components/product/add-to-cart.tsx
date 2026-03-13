@@ -10,6 +10,7 @@ import {
   PERSONALISATION_FONTS,
   PERSONALISATION_COLOURS,
 } from "@/lib/constants"
+import { CloudinaryUploadWidget } from "@/components/product/cloudinary-upload-widget"
 import { toggleWishlist } from "@/lib/actions/user"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -66,6 +67,7 @@ export function AddToCart({
   )
   const [personValues, setPersonValues] = useState<Record<string, string>>({})
   const [added, setAdded] = useState(false)
+  const [validationErrors, setValidationErrors] = useState<Record<string, string>>({})
   const [wishlistPending, startWishlistTransition] = useTransition()
   const [isWishlisted, setIsWishlisted] = useState(false)
   const router = useRouter()
@@ -90,35 +92,44 @@ export function AddToCart({
     : 0
 
   function handleAddToCart() {
+    // Validate required fields
+    if (isPersonalizable && hasDbOptions) {
+      const errors: Record<string, string> = {}
+      personalizationOptions.forEach((opt) => {
+        const val = personValues[opt.optionKey]
+        if (opt.isRequired && !val) {
+          errors[opt.optionKey] = `${opt.label} is required`
+        }
+        if (val && (opt.optionType === "TEXT" || opt.optionType === "TEXTAREA")) {
+          const maxLen = (opt.constraints as { maxLength?: number } | null)?.maxLength
+          if (maxLen && val.length > maxLen) {
+            errors[opt.optionKey] = `${opt.label} must be ${maxLen} characters or less`
+          }
+        }
+      })
+      if (Object.keys(errors).length > 0) {
+        setValidationErrors(errors)
+        return
+      }
+      setValidationErrors({})
+    }
+
     const personalization: Record<string, string> = {}
     let personalizationSummary = ""
 
-    if (isPersonalizable) {
-      if (hasDbOptions) {
-        // Use DB-based personalization options
-        personalizationOptions.forEach((opt) => {
-          const val = personValues[opt.optionKey]
-          if (val) {
-            personalization[opt.optionKey] = val
-            if (personalizationSummary) personalizationSummary += ", "
+    if (isPersonalizable && hasDbOptions) {
+      personalizationOptions.forEach((opt) => {
+        const val = personValues[opt.optionKey]
+        if (val) {
+          personalization[opt.optionKey] = val
+          if (personalizationSummary) personalizationSummary += ", "
+          if (opt.optionType === "IMAGE") {
+            personalizationSummary += `${opt.label}: Uploaded`
+          } else {
             personalizationSummary += `${opt.label}: ${val}`
           }
-        })
-      } else {
-        // Fallback to legacy hardcoded options
-        if (personValues.name) {
-          personalization.name = personValues.name
-          personalizationSummary += `Name: ${personValues.name}`
         }
-        if (personValues.font) {
-          personalization.font = personValues.font
-          if (personalizationSummary) personalizationSummary += ", "
-          personalizationSummary += `Font: ${personValues.font}`
-        }
-        if (personValues.colour) {
-          personalization.colour = personValues.colour
-        }
-      }
+      })
     }
 
     const cartItemId = `${productId}-${selectedVariant || "default"}-${JSON.stringify(personalization)}`
@@ -186,175 +197,129 @@ export function AddToCart({
       )}
 
       {/* Personalisation Section */}
-      {isPersonalizable && (
+      {isPersonalizable && hasDbOptions && (
         <div className="rounded-lg border border-gray-200 bg-[#f8f9fa] p-4">
           <h3 className="mb-3 text-sm font-semibold text-charcoal uppercase tracking-wide">
             Personalisation
           </h3>
 
-          {hasDbOptions ? (
-            // DB-based personalization options
-            <div className="space-y-3">
-              {personalizationOptions.map((opt) => (
-                <div key={opt.id}>
-                  <Label className="mb-1.5 text-sm text-gray-600">
-                    {opt.label}
-                    {opt.isRequired && <span className="text-rose ml-0.5">*</span>}
-                    {opt.priceModifier > 0 && (
-                      <span className="ml-1 text-xs text-gray-400">
-                        (+{formatPrice(opt.priceModifier)})
-                      </span>
-                    )}
-                  </Label>
-
-                  {opt.optionType === "TEXT" && (
-                    <Input
-                      placeholder={`Enter ${opt.label.toLowerCase()}...`}
-                      maxLength={
-                        (opt.constraints as { maxLength?: number } | null)?.maxLength || 50
-                      }
-                      value={personValues[opt.optionKey] || ""}
-                      onChange={(e) =>
-                        handlePersonValueChange(opt.optionKey, e.target.value)
-                      }
-                      className="mt-1 border-gray-200 bg-white"
-                    />
+          <div className="space-y-3">
+            {personalizationOptions.map((opt) => (
+              <div key={opt.id}>
+                <Label className="mb-1.5 text-sm text-gray-600">
+                  {opt.label}
+                  {opt.isRequired && <span className="text-rose ml-0.5">*</span>}
+                  {opt.priceModifier > 0 && (
+                    <span className="ml-1 text-xs text-gray-400">
+                      (+{formatPrice(opt.priceModifier)})
+                    </span>
                   )}
-
-                  {opt.optionType === "TEXTAREA" && (
-                    <Textarea
-                      placeholder={`Enter ${opt.label.toLowerCase()}...`}
-                      maxLength={
-                        (opt.constraints as { maxLength?: number } | null)?.maxLength || 200
-                      }
-                      value={personValues[opt.optionKey] || ""}
-                      onChange={(e) =>
-                        handlePersonValueChange(opt.optionKey, e.target.value)
-                      }
-                      className="mt-1 border-gray-200 bg-white"
-                      rows={3}
-                    />
-                  )}
-
-                  {opt.optionType === "FONT" && (
-                    <Select
-                      value={personValues[opt.optionKey] || PERSONALISATION_FONTS[0]}
-                      onValueChange={(v) => handlePersonValueChange(opt.optionKey, v)}
-                    >
-                      <SelectTrigger className="mt-1 w-full border-gray-200 bg-white">
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {PERSONALISATION_FONTS.map((font) => (
-                          <SelectItem key={font} value={font}>
-                            {font}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  )}
-
-                  {opt.optionType === "COLOUR" && (
-                    <div className="mt-2 flex flex-wrap gap-2">
-                      {PERSONALISATION_COLOURS.map((colour) => (
-                        <button
-                          key={colour.value}
-                          title={colour.name}
-                          onClick={() =>
-                            handlePersonValueChange(opt.optionKey, colour.value)
-                          }
-                          className={`h-8 w-8 rounded-full border-2 transition-all hover:scale-110 focus:outline-none focus:ring-2 focus:ring-rose/40 focus:ring-offset-2 ${
-                            personValues[opt.optionKey] === colour.value
-                              ? "border-charcoal scale-110"
-                              : "border-gray-200 hover:border-gray-400"
-                          }`}
-                          style={{ backgroundColor: colour.value }}
-                        />
-                      ))}
-                    </div>
-                  )}
-
-                  {opt.optionType === "DROPDOWN" && (
-                    <Select
-                      value={personValues[opt.optionKey] || ""}
-                      onValueChange={(v) => handlePersonValueChange(opt.optionKey, v)}
-                    >
-                      <SelectTrigger className="mt-1 w-full border-gray-200 bg-white">
-                        <SelectValue placeholder={`Select ${opt.label.toLowerCase()}`} />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {((opt.constraints as { options?: string[] } | null)?.options || []).map(
-                          (item: string) => (
-                            <SelectItem key={item} value={item}>
-                              {item}
-                            </SelectItem>
-                          )
-                        )}
-                      </SelectContent>
-                    </Select>
-                  )}
-                </div>
-              ))}
-            </div>
-          ) : (
-            // Legacy fallback - hardcoded name/font/colour
-            <>
-              <div className="mb-3">
-                <Label
-                  htmlFor="personalise-name"
-                  className="mb-1.5 text-sm text-gray-600"
-                >
-                  Your Name
                 </Label>
-                <Input
-                  id="personalise-name"
-                  placeholder="Enter name..."
-                  maxLength={20}
-                  value={personValues.name || ""}
-                  onChange={(e) => handlePersonValueChange("name", e.target.value)}
-                  className="mt-1 border-gray-200 bg-white"
-                />
-              </div>
 
-              <div className="mb-3">
-                <Label className="mb-1.5 text-sm text-gray-600">Font</Label>
-                <Select
-                  value={personValues.font || PERSONALISATION_FONTS[0]}
-                  onValueChange={(v) => handlePersonValueChange("font", v)}
-                >
-                  <SelectTrigger className="mt-1 w-full border-gray-200 bg-white">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {PERSONALISATION_FONTS.map((font) => (
-                      <SelectItem key={font} value={font}>
-                        {font}
-                      </SelectItem>
+                {opt.optionType === "TEXT" && (
+                  <Input
+                    placeholder={`Enter ${opt.label.toLowerCase()}...`}
+                    maxLength={
+                      (opt.constraints as { maxLength?: number } | null)?.maxLength || 50
+                    }
+                    value={personValues[opt.optionKey] || ""}
+                    onChange={(e) =>
+                      handlePersonValueChange(opt.optionKey, e.target.value)
+                    }
+                    className="mt-1 border-gray-200 bg-white"
+                  />
+                )}
+
+                {opt.optionType === "TEXTAREA" && (
+                  <Textarea
+                    placeholder={`Enter ${opt.label.toLowerCase()}...`}
+                    maxLength={
+                      (opt.constraints as { maxLength?: number } | null)?.maxLength || 200
+                    }
+                    value={personValues[opt.optionKey] || ""}
+                    onChange={(e) =>
+                      handlePersonValueChange(opt.optionKey, e.target.value)
+                    }
+                    className="mt-1 border-gray-200 bg-white"
+                    rows={3}
+                  />
+                )}
+
+                {opt.optionType === "FONT" && (
+                  <Select
+                    value={personValues[opt.optionKey] || PERSONALISATION_FONTS[0]}
+                    onValueChange={(v) => handlePersonValueChange(opt.optionKey, v)}
+                  >
+                    <SelectTrigger className="mt-1 w-full border-gray-200 bg-white">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {PERSONALISATION_FONTS.map((font) => (
+                        <SelectItem key={font} value={font}>
+                          {font}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                )}
+
+                {opt.optionType === "COLOUR" && (
+                  <div className="mt-2 flex flex-wrap gap-2">
+                    {PERSONALISATION_COLOURS.map((colour) => (
+                      <button
+                        key={colour.value}
+                        title={colour.name}
+                        onClick={() =>
+                          handlePersonValueChange(opt.optionKey, colour.value)
+                        }
+                        className={`h-8 w-8 rounded-full border-2 transition-all hover:scale-110 focus:outline-none focus:ring-2 focus:ring-rose/40 focus:ring-offset-2 ${
+                          personValues[opt.optionKey] === colour.value
+                            ? "border-charcoal scale-110"
+                            : "border-gray-200 hover:border-gray-400"
+                        }`}
+                        style={{ backgroundColor: colour.value }}
+                      />
                     ))}
-                  </SelectContent>
-                </Select>
-              </div>
+                  </div>
+                )}
 
-              <div>
-                <Label className="mb-1.5 text-sm text-gray-600">Colour</Label>
-                <div className="mt-2 flex flex-wrap gap-2">
-                  {PERSONALISATION_COLOURS.map((colour) => (
-                    <button
-                      key={colour.value}
-                      title={colour.name}
-                      onClick={() => handlePersonValueChange("colour", colour.value)}
-                      className={`h-8 w-8 rounded-full border-2 transition-all hover:scale-110 focus:outline-none focus:ring-2 focus:ring-rose/40 focus:ring-offset-2 ${
-                        personValues.colour === colour.value
-                          ? "border-charcoal scale-110"
-                          : "border-gray-200 hover:border-gray-400"
-                      }`}
-                      style={{ backgroundColor: colour.value }}
-                    />
-                  ))}
-                </div>
+                {opt.optionType === "DROPDOWN" && (
+                  <Select
+                    value={personValues[opt.optionKey] || ""}
+                    onValueChange={(v) => handlePersonValueChange(opt.optionKey, v)}
+                  >
+                    <SelectTrigger className="mt-1 w-full border-gray-200 bg-white">
+                      <SelectValue placeholder={`Select ${opt.label.toLowerCase()}`} />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {((opt.constraints as { options?: string[] } | null)?.options || []).map(
+                        (item: string) => (
+                          <SelectItem key={item} value={item}>
+                            {item}
+                          </SelectItem>
+                        )
+                      )}
+                    </SelectContent>
+                  </Select>
+                )}
+
+                {opt.optionType === "IMAGE" && (
+                  <CloudinaryUploadWidget
+                    value={personValues[opt.optionKey] || ""}
+                    onUpload={(url) => handlePersonValueChange(opt.optionKey, url)}
+                    onRemove={() => handlePersonValueChange(opt.optionKey, "")}
+                    constraints={opt.constraints as { maxFileSizeMB?: number; allowedTypes?: string[] } | undefined}
+                  />
+                )}
+
+                {validationErrors[opt.optionKey] && (
+                  <p className="mt-1 text-xs text-destructive">
+                    {validationErrors[opt.optionKey]}
+                  </p>
+                )}
               </div>
-            </>
-          )}
+            ))}
+          </div>
         </div>
       )}
 
