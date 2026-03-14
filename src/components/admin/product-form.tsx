@@ -46,7 +46,7 @@ const personalisationOptionSchema = z.object({
   type: z.string().min(1, "Type is required"),
   required: z.boolean().default(false),
   priceModifier: z.coerce.number().min(0).default(0),
-  constraints: z.record(z.unknown()).optional(),
+  constraints: z.any().optional(),
 })
 
 const productSchema = z.object({
